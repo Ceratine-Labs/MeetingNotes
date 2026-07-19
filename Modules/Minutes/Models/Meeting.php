@@ -35,11 +35,14 @@ class Meeting extends BaseModel
         'rendered_html',
         'model_used',
         'prompt_version',
+        'regen_section',
+        'section_proposal',
     ];
 
     protected $casts = [
         'meeting_date' => 'date',
         'sections' => 'array',
+        'section_proposal' => 'array',
     ];
 
     public function transcript()

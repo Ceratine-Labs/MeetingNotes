@@ -102,6 +102,8 @@ class MeetingController extends Controller
             'status' => $meeting->status,
             'progress_stage' => $meeting->progress_stage,
             'error' => $meeting->error,
+            'regen_section' => $meeting->regen_section,
+            'has_proposal' => $meeting->section_proposal !== null,
         ]);
     }
 

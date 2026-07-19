@@ -185,6 +185,45 @@ class MinutesGenerator
         ]);
     }
 
+    /**
+     * Regenerate one section against the transcript + current minutes.
+     * Returns the proposed section value — caller stores it as a
+     * proposal; nothing is applied until the user accepts.
+     */
+    public function regenerateSection(Meeting $meeting, string $section): mixed
+    {
+        if (! in_array($section, MinutesSchema::SECTIONS, true)) {
+            throw new GenerationException("Unknown section '{$section}'.");
+        }
+
+        $template = $this->activeTemplate('minutes.regenerate_section');
+        $sectionSchema = MinutesSchema::full()['properties'][$section];
+
+        $response = $this->llm->structured(
+            'regenerate_section',
+            $template->body,
+            "SECTION TO REGENERATE: {$section}\n\n"
+                . "CURRENT FULL MINUTES (JSON):\n"
+                . json_encode($meeting->sections, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+                . "\n\nSOURCE TRANSCRIPT:\n\n" . $meeting->transcript->raw_text,
+            [
+                'type' => 'object',
+                'required' => [$section],
+                'properties' => [$section => $sectionSchema],
+            ],
+            $meeting->id,
+            $template->id,
+        );
+
+        $value = ((array) $response->content)[$section] ?? null;
+
+        if ($value === null) {
+            throw new GenerationException("Model response did not contain '{$section}'.");
+        }
+
+        return $value;
+    }
+
     protected function userContext(Meeting $meeting): string
     {
         $hints = array_filter([
