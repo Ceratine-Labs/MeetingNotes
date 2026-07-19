@@ -1,0 +1,12 @@
+{
+    "name": "Core",
+    "alias": "core",
+    "description": "Foundation module: base model, module registry, seed master, settings, menus, layout",
+    "version": "1.0.0",
+    "priority": 0,
+    "system": true,
+    "providers": [
+        "Modules\\Core\\Providers\\CoreServiceProvider"
+    ],
+    "requires": []
+}

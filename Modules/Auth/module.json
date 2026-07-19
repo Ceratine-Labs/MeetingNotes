@@ -1,0 +1,12 @@
+{
+    "name": "Auth",
+    "alias": "auth",
+    "description": "Users, roles (admin/user), login",
+    "version": "1.0.0",
+    "priority": 10,
+    "system": true,
+    "providers": [
+        "Modules\\Auth\\Providers\\AuthServiceProvider"
+    ],
+    "requires": ["Core"]
+}
