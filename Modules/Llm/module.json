@@ -1,0 +1,12 @@
+{
+    "name": "Llm",
+    "alias": "llm",
+    "description": "LLM provider drivers, admin settings, prompt templates, generation run log",
+    "version": "1.0.0",
+    "priority": 20,
+    "system": true,
+    "providers": [
+        "Modules\\Llm\\Providers\\LlmServiceProvider"
+    ],
+    "requires": ["Core", "Auth"]
+}
