@@ -32,6 +32,19 @@
         </div>
         <div class="d-flex gap-2">
             @if ($meeting->isReady())
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="bi bi-download me-1"></i> Export
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{{ route('minutes.export', [$meeting, 'docx']) }}">
+                            <i class="bi bi-file-earmark-word me-2"></i>Word (.docx)</a></li>
+                        <li><a class="dropdown-item" href="{{ route('minutes.export', [$meeting, 'pdf']) }}">
+                            <i class="bi bi-file-earmark-pdf me-2"></i>PDF</a></li>
+                        <li><a class="dropdown-item" href="{{ route('minutes.export', [$meeting, 'md']) }}">
+                            <i class="bi bi-filetype-md me-2"></i>Markdown</a></li>
+                    </ul>
+                </div>
                 <button type="button" class="btn btn-outline-secondary" id="toggle-source">
                     <i class="bi bi-layout-split me-1"></i> Source
                 </button>

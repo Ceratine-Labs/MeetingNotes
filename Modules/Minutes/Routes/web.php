@@ -12,6 +12,10 @@ Route::get('/minutes/{meeting}/status', [MeetingController::class, 'status'])->n
 Route::post('/minutes/{meeting}/retry', [MeetingController::class, 'retry'])->name('minutes.retry');
 Route::delete('/minutes/{meeting}', [MeetingController::class, 'destroy'])->name('minutes.destroy');
 
+Route::get('/minutes/{meeting}/export/{format}', [\Modules\Minutes\Http\Controllers\ExportController::class, 'download'])
+    ->where('format', 'md|pdf|docx')
+    ->name('minutes.export');
+
 Route::put('/minutes/{meeting}/sections/{section}', [SectionController::class, 'update'])->name('minutes.sections.update');
 Route::post('/minutes/{meeting}/sections/{section}/regenerate', [SectionController::class, 'regenerate'])->name('minutes.sections.regenerate');
 Route::get('/minutes/{meeting}/proposal', [SectionController::class, 'proposal'])->name('minutes.proposal');
