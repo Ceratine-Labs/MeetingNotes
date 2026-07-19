@@ -1,0 +1,12 @@
+{
+    "name": "Minutes",
+    "alias": "minutes",
+    "description": "Meetings, transcripts, extraction, generation pipeline, workspace UI",
+    "version": "1.0.0",
+    "priority": 30,
+    "system": false,
+    "providers": [
+        "Modules\\Minutes\\Providers\\MinutesServiceProvider"
+    ],
+    "requires": ["Core", "Auth", "Llm"]
+}
