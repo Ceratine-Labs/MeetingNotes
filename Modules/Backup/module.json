@@ -1,0 +1,12 @@
+{
+    "name": "Backup",
+    "alias": "backup",
+    "description": "Admin backup interface over spatie/laravel-backup: run, list, download, delete, schedule",
+    "version": "1.0.0",
+    "priority": 40,
+    "system": true,
+    "providers": [
+        "Modules\\Backup\\Providers\\BackupServiceProvider"
+    ],
+    "requires": ["Core", "Auth"]
+}
