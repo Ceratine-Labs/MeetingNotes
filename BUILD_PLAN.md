@@ -234,17 +234,15 @@ derived artifacts.
 
 ## 10. Build phases
 
-| Phase | Scope | Est. |
+| Phase | Scope | Status |
 |---|---|---|
-| **0 — Scaffold** | Laravel 12, module system (port Ceratine pattern or nwidart), Tailwind/Livewire, Auth module, Core settings service, **seed master**, base layout, git init | 1 day |
-| **1 — Llm module** | Manager + 3 drivers, admin LLM settings UI with test-connection, prompt templates (seeded from spec), generation_runs log | 1–1.5 days |
-| **2 — Minutes core** | Meetings/transcripts models, extractors (txt/md/docx/pdf), GenerateMinutesJob incl. chunking, structured-output schema, Library + New + Workspace UIs with streaming progress | 2–3 days |
-| **3 — Edit & regen** | Per-section inline edit, section regenerate with diff-accept, full re-run | 0.5–1 day |
-| **4 — Exports** | DOCX, PDF, Markdown/clipboard | 0.5–1 day |
-| **5 — Backup module** | spatie/laravel-backup + admin UI + schedule + failure mail | 0.5 day |
-| **6 — Polish/QA** | Error/empty states, long-transcript + garbage-input tests, feature tests on seed master + pipeline, QA log in PM, deploy | 1 day |
-
-**Total ≈ 6.5–9 working days.**
+| **0 — Scaffold** | Laravel 13, Ceratine-pattern module system, Auth module, Core settings service, **seed master**, base layout, git init | **done** 2026-07-19 |
+| **1 — Llm module** | Manager + 3 drivers, admin LLM settings UI with test-connection, prompt templates (seeded from spec), generation_runs log | **done** 2026-07-19 |
+| **2 — Minutes core** | Meetings/transcripts models, extractors (txt/md/docx/pdf), GenerateMinutesJob incl. chunking, structured-output schema, Library + New + Workspace UIs with progress polling | **done** 2026-07-19 |
+| **3 — Edit & regen** | Per-section edit (validated JSON), section regenerate with diff-accept | **done** 2026-07-19 |
+| **4 — Exports** | DOCX, PDF (mpdf), Markdown/clipboard | **done** 2026-07-19 |
+| **5 — Backup module** | spatie/laravel-backup + admin UI + schedule + failure mail | **done** 2026-07-19 |
+| **6 — Polish/QA** | Live smoke, cache-poisoning fix, README + deploy samples, 47 feature tests, QA log in PM | **done** 2026-07-19 (live-LLM smoke pending an API key) |
 
 Deferred (post-v1, in rough priority order): audio transcription
 (Whisper API or local), OCR for scanned PDFs, email-in ingestion,

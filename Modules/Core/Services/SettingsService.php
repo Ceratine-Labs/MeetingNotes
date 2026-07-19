@@ -80,10 +80,15 @@ class SettingsService
 
     protected function all(): \Illuminate\Support\Collection
     {
-        return Cache::remember(self::CACHE_KEY, 300, function () {
+        // Cache plain arrays only — serialized Collection objects break
+        // on unserialize in other processes (database cache store).
+        $rows = Cache::remember(self::CACHE_KEY, 300, function () {
             return Setting::query()->get()
                 ->keyBy('key')
-                ->map(fn ($s) => ['value' => $s->value, 'is_encrypted' => $s->is_encrypted]);
+                ->map(fn ($s) => ['value' => $s->value, 'is_encrypted' => (bool) $s->is_encrypted])
+                ->toArray();
         });
+
+        return collect($rows);
     }
 }

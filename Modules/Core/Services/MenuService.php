@@ -38,23 +38,30 @@ class MenuService
     /**
      * Sidebar entries the given user may see, grouped by section and
      * filtered to routes that actually exist.
+     *
+     * Only plain arrays go into the cache — never Eloquent models or
+     * Collection objects. Serialized objects in the database cache
+     * store unserialize as __PHP_Incomplete_Class in other processes.
      */
     public function visibleFor(?object $user): Collection
     {
-        $tree = Cache::remember('core.menu.tree', self::CACHE_TTL, function () {
+        $rows = Cache::remember('core.menu.tree', self::CACHE_TTL, function () {
             return Menu::query()
                 ->where('is_active', true)
                 ->orderBy('sort')
                 ->orderBy('label')
-                ->get();
+                ->get()
+                ->map(fn (Menu $m) => $m->only(['section', 'label', 'route_name', 'icon', 'required_role']))
+                ->all();
         });
 
-        return $tree
-            ->filter(fn (Menu $m) => Route::has($m->route_name))
-            ->filter(function (Menu $m) use ($user) {
+        return collect($rows)
+            ->map(fn (array $r) => (object) $r)
+            ->filter(fn (object $m) => Route::has($m->route_name))
+            ->filter(function (object $m) use ($user) {
                 return $m->required_role === null
                     || ($user !== null && $user->role === $m->required_role);
             })
-            ->groupBy(fn (Menu $m) => $m->section ?? '');
+            ->groupBy(fn (object $m) => $m->section ?? '');
     }
 }
