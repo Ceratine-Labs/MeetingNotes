@@ -300,13 +300,11 @@ Still open at the end of the phase:
 3. **Scheduled erasure of deleted accounts** — the privacy policy commits to erasure
    after `SITE_DATA_RETENTION_DAYS`; there is no job doing it yet. The wording says
    "will be retained… then erased" rather than implying an automated process.
-4. **Feature test coverage is partial.** 69 tests pass, including a dedicated
-   `TenancyIsolationTest` (cross-workspace reads, stale pointers, role gates) and
-   `SearchTest`. Billing has no phpunit coverage yet — the Paystack gateway, webhook
-   idempotency and quota rollover are verified by reading and by live probes, not by
-   tests. That is the largest remaining gap.
-5. **Search results are keyboard-navigable only one level deep** — Down-arrow enters the
-   list, but arrow-cycling between results is not implemented.
+4. **115 tests pass**, covering tenancy isolation, search, and all four billing areas
+   (subscription lifecycle, quota metering, webhook authenticity/idempotency, and the
+   gateway + checkout rules). Writing the billing tests found a real bug: `provisionFree`
+   only short-circuited on an active *free* subscription, so a replayed
+   `OrganisationCreated` would have downgraded a paying customer. Fixed.
 
 Deferred (post-v1, in rough priority order): audio transcription
 (Whisper API or local), OCR for scanned PDFs, email-in ingestion,

@@ -44,23 +44,24 @@ class SubscriptionService
     }
 
     /**
-     * Put an organisation on the free plan.
+     * Ensure an organisation has a subscription, defaulting to the free plan.
      *
-     * Called in two situations, which is why it is idempotent:
-     *   - a brand-new organisation (via the OrganisationCreated event);
-     *   - an organisation being downgraded after cancellation or a failed
-     *     renewal.
+     * Called only from the OrganisationCreated listener, whose job is "this new
+     * workspace needs a plan" — NOT "force this workspace onto free". The deliberate
+     * downgrade path is downgradeIfElapsed(), which calls start() directly.
      *
-     * Returning the existing subscription when one is already live means a
-     * duplicate OrganisationCreated event, or a retried listener, cannot create a
-     * second free subscription alongside a paid one — which would silently
-     * downgrade a paying customer.
+     * That distinction is the whole point of the guard below. It returns ANY live
+     * subscription untouched, not just a free one: a replayed or duplicated event on an
+     * organisation that has since upgraded must not knock a paying customer back to
+     * free. An earlier version only short-circuited on an active *free* subscription,
+     * which meant exactly that downgrade — caught by
+     * BillingSubscriptionTest::test_a_paid_subscription_is_not_downgraded_by_a_replayed_event.
      */
     public function provisionFree(Organisation $organisation): Subscription
     {
         $existing = $this->currentFor($organisation);
 
-        if ($existing !== null && $existing->isFree() && $existing->status === Subscription::STATUS_ACTIVE) {
+        if ($existing !== null) {
             return $existing;
         }
 

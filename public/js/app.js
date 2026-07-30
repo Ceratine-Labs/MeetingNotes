@@ -471,6 +471,31 @@
             }
         });
 
+        // Arrow-cycling once inside the list. Bound on the panel rather than each
+        // result so it keeps working after a re-render replaces every row.
+        panel.addEventListener('keydown', function (event) {
+            const items = Array.from(panel.querySelectorAll('.mn-search-result, .dropdown-item'));
+            const index = items.indexOf(document.activeElement);
+
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                // Wraps to the top rather than dead-ending at the last result.
+                (items[index + 1] || items[0]).focus();
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                // From the first item, Up returns to the input — where someone
+                // pressing Up is almost always trying to edit their search.
+                if (index <= 0) {
+                    input.focus();
+                } else {
+                    items[index - 1].focus();
+                }
+            } else if (event.key === 'Escape') {
+                close();
+                input.focus();
+            }
+        });
+
         // Click-away closes it. Bound on document rather than using `blur`, which
         // would fire before a click on a result could register.
         document.addEventListener('click', function (event) {

@@ -40,6 +40,7 @@ class SearchIndexer
             $this->forget($meeting);
 
             $documents = array_merge(
+                $this->meetingDocuments($meeting),
                 $this->transcriptDocuments($meeting),
                 $this->sectionDocuments($meeting),
                 $this->decisionDocuments($meeting),
@@ -66,6 +67,37 @@ class SearchIndexer
         SearchDocument::withoutOrganisationScope()
             ->where('meeting_id', $meeting->getKey())
             ->delete();
+    }
+
+    /**
+     * The meeting itself: title, date, type and chair.
+     *
+     * Separate from the section documents and weighted highest, so typing a meeting's
+     * name ranks the meeting above a discussion paragraph that merely mentions it. The
+     * date is included in searchable form ("15 July 2026", "2026-07-15") because people
+     * do search by date.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function meetingDocuments(Meeting $meeting): array
+    {
+        $date = $meeting->meeting_date ?? $meeting->created_at;
+        $info = is_array($meeting->sections) ? ($meeting->sections['meeting_info'] ?? []) : [];
+
+        return [$this->document($meeting, SearchDocument::TYPE_MEETING, [
+            'title' => $this->meetingTitle($meeting),
+            'label' => $date?->toFormattedDayDateString(),
+            'body' => implode("\n", array_filter([
+                $this->meetingTitle($meeting),
+                // Several formats, because someone may type any of them.
+                $date?->format('j F Y'),
+                $date?->format('Y-m-d'),
+                $this->flatten($info['meeting_type'] ?? null),
+                $this->flatten($info['chair'] ?? null),
+                $this->flatten($info['location'] ?? null),
+                $this->flatten($info['objective'] ?? null),
+            ])),
+        ])];
     }
 
     /**

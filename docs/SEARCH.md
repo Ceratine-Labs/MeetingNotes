@@ -30,12 +30,15 @@ wants "what did we decide about X", not "where was X mentioned".
 
 | Type | Weight | Body indexed |
 |---|---|---|
+| `meeting` | 5 | Title, date (in several formats — people search by date), meeting type, chair, location, objective |
 | `decision` | 10 | The decision, who made it, rationale, conditions, impact |
 | `action_item` | 20 | Description, **owner**, due date, success criteria, dependencies |
 | `minutes_section` | 40 | One row per populated section (attendance, discussion, next steps…) |
 | `transcript` | 60 | The raw meeting text |
 
 Indexing the owner and the attendance list is what makes a person-name search work.
+The `meeting` row is weighted highest so typing a meeting's name ranks the meeting
+itself above a discussion paragraph that merely mentions it.
 
 ## Two engines
 
@@ -81,7 +84,9 @@ the boundary.
 - **Everything is rendered with `textContent`, never `innerHTML`.** Snippets come from
   meeting transcripts — user-supplied content that must never be interpreted as markup.
 - Enter goes straight to the full results page without waiting out the debounce; Escape
-  closes; Down-arrow moves into the results.
+  closes and returns focus to the input; Down-arrow moves into the results and then
+  cycles through them (wrapping at the bottom), and Up from the first result returns to
+  the input — where someone pressing Up is almost always trying to edit their search.
 - Minimum 2 characters, enforced in both the UI and `SearchService`.
 
 ## Keeping the index fresh

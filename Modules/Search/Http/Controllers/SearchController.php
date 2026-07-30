@@ -59,6 +59,7 @@ class SearchController extends Controller
         $type = $request->query('type');
 
         $validTypes = [
+            SearchDocument::TYPE_MEETING,
             SearchDocument::TYPE_DECISION,
             SearchDocument::TYPE_ACTION_ITEM,
             SearchDocument::TYPE_SECTION,
@@ -75,6 +76,7 @@ class SearchController extends Controller
             'results' => $this->search->search($term, 50, $type),
             'types' => [
                 null => 'Everything',
+                SearchDocument::TYPE_MEETING => 'Meetings',
                 SearchDocument::TYPE_DECISION => 'Decisions',
                 SearchDocument::TYPE_ACTION_ITEM => 'Action items',
                 SearchDocument::TYPE_SECTION => 'Minutes',

@@ -9,7 +9,8 @@ use Modules\Minutes\Models\Meeting;
 use Modules\Tenancy\Concerns\BelongsToOrganisation;
 
 /**
- * One searchable thing — a transcript, a minutes section, a decision or an action item.
+ * One searchable thing — a meeting, a transcript, a minutes section, a decision or an
+ * action item.
  *
  * A derived record, not a source of truth: every row is rebuilt from the meeting it
  * belongs to whenever that meeting's minutes are persisted. Nothing should ever edit a
@@ -34,6 +35,14 @@ class SearchDocument extends Model
 {
     use BelongsToOrganisation;
     use HasUuid;
+
+    /**
+     * The meeting itself — its title, date, type and chair.
+     *
+     * Highest weight: someone typing a meeting's name wants the meeting, not a section
+     * that happens to mention it.
+     */
+    public const TYPE_MEETING = 'meeting';
 
     /**
      * The raw meeting text. Lowest weight — it is where a name like "Maria" is most
@@ -66,6 +75,7 @@ class SearchDocument extends Model
      * @var array<string, int>
      */
     public const WEIGHTS = [
+        self::TYPE_MEETING => 5,
         self::TYPE_DECISION => 10,
         self::TYPE_ACTION_ITEM => 20,
         self::TYPE_SECTION => 40,
@@ -112,6 +122,7 @@ class SearchDocument extends Model
     public function typeLabel(): string
     {
         return match ($this->type) {
+            self::TYPE_MEETING => 'Meeting',
             self::TYPE_TRANSCRIPT => 'Transcript',
             self::TYPE_SECTION => 'Minutes',
             self::TYPE_DECISION => 'Decision',
@@ -126,6 +137,7 @@ class SearchDocument extends Model
     public function typeColour(): string
     {
         return match ($this->type) {
+            self::TYPE_MEETING => 'bg-purple-lt',
             self::TYPE_DECISION => 'bg-blue-lt',
             self::TYPE_ACTION_ITEM => 'bg-orange-lt',
             self::TYPE_SECTION => 'bg-green-lt',
