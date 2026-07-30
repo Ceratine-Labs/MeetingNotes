@@ -5,6 +5,7 @@ namespace Modules\Llm\Services;
 use Modules\Core\Services\SettingsService;
 use Modules\Llm\Contracts\LlmDriver;
 use Modules\Llm\Drivers\AnthropicDriver;
+use Modules\Llm\Drivers\FakeDriver;
 use Modules\Llm\Drivers\OpenAiCompatibleDriver;
 use Modules\Llm\Drivers\OpenAiDriver;
 use Modules\Llm\Exceptions\LlmException;
@@ -112,6 +113,10 @@ class LlmManager
         $timeout = (int) $this->settings->get('llm.timeout', config('llm.defaults.timeout'));
 
         return match ($provider) {
+            // Development/demo/E2E only. FakeDriver's own constructor refuses
+            // production; it is also absent from the admin provider dropdown
+            // (config llm.providers), so it can only be selected deliberately.
+            'fake' => new FakeDriver,
             'anthropic' => new AnthropicDriver($this->requireKey('llm.anthropic.api_key', 'Anthropic'), $timeout),
             'openai' => new OpenAiDriver($this->requireKey('llm.openai.api_key', 'OpenAI'), $timeout),
             'openai_compatible' => new OpenAiCompatibleDriver(

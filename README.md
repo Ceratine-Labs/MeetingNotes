@@ -120,14 +120,44 @@ scheduler cron on the host:
 Restore procedure: [docs/RESTORE.md](docs/RESTORE.md) — deliberately manual, no
 one-click restore.
 
+## Demo data and the fake LLM
+
+Everything in the product can be exercised before an LLM key exists:
+
+```bash
+# A browsable demo workspace: verified user, unlimited subscription, four
+# meetings in every state, action items open and done. Rerunning converges
+# on the same state. Refuses to run in production.
+php artisan demo:seed
+#   Login: demo@notefiend.test / demo-password-123
+
+# Same, plus switch the LLM provider setting to the in-process fake
+# driver: instant, deterministic, schema-valid generations with no
+# network and no cost. Also refuses production.
+php artisan demo:seed --fake-llm
+
+# Back to a real provider afterwards: Admin -> LLM providers, or reseed
+# settings. The 'fake' provider never appears in the admin dropdown.
+```
+
 ## Tests
 
 ```bash
-php artisan test --filter=SomeTest   # run the specific test you touched
+# PHPUnit (in-memory SQLite via phpunit.xml; full run is safe and fast)
+php artisan test
+php artisan test --filter=SomeTest   # or just the test you touched
+
+# Browser E2E (Playwright, own SQLite DB at database/e2e.sqlite, seeds
+# itself with demo:seed --fake-llm; never touches your dev database)
+cd e2e
+npm install
+npx playwright install chromium      # once per machine; CI does this itself
+npm test
+# Machine already has a Chromium? Skip the download:
+#   CHROMIUM_PATH=/path/to/chromium npm test
 ```
 
-Targeted runs only. LLM HTTP is faked; tests clean up their own rows in `tearDown()`
-rather than using `RefreshDatabase`, which would wipe the seeded demo state.
+CI (`.github/workflows/ci.yml`) runs both suites on every push and pull request.
 
 ## Documentation
 
