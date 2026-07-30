@@ -64,6 +64,13 @@
         document.documentElement.setAttribute('data-bs-theme', theme);
         setCookie(THEME_COOKIE, theme, 365);
 
+        // Follow along with the browser/PWA titlebar colour. The values mirror
+        // what head.blade.php renders server-side for each theme.
+        const themeColor = document.querySelector('meta[name="theme-color"]');
+        if (themeColor) {
+            themeColor.setAttribute('content', theme === 'dark' ? '#04060a' : '#ffffff');
+        }
+
         // Keep every toggle on the page (navbar + user menu) visually in sync.
         document.querySelectorAll('[data-mn-theme-toggle]').forEach(function (el) {
             el.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
@@ -670,6 +677,25 @@
     }
 
     /* ------------------------------------------------------------------ *
+     * Service worker (PWA)
+     *
+     * public/sw.js only caches versioned static assets and provides the
+     * offline fallback page; it never caches HTML. Registration failure is
+     * silently ignored: the app is fully functional without it.
+     * ------------------------------------------------------------------ */
+
+    function initServiceWorker() {
+        // isSecureContext covers localhost too, so this works in dev.
+        if (!('serviceWorker' in navigator) || !window.isSecureContext) {
+            return;
+        }
+
+        navigator.serviceWorker.register('/sw.js').catch(function () {
+            // Non-fatal: an old browser or a blocked registration changes nothing.
+        });
+    }
+
+    /* ------------------------------------------------------------------ *
      * Boot
      * ------------------------------------------------------------------ */
 
@@ -681,6 +707,7 @@
         initCounters();
         initHeroDemo();
         initNavShadow();
+        initServiceWorker();
     });
 
     // Expose the pieces that dynamically-rendered pages need to re-run.

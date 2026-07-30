@@ -19,6 +19,7 @@ use Modules\Site\Http\Controllers\SiteController;
 */
 
 Route::get('/', [SiteController::class, 'home'])->name('site.home');
+Route::get('/manifest.webmanifest', [SiteController::class, 'manifest'])->name('site.manifest');
 Route::get('/how-it-works', [SiteController::class, 'features'])->name('site.features');
 Route::get('/pricing', [SiteController::class, 'pricing'])->name('site.pricing');
 Route::get('/terms', [SiteController::class, 'terms'])->name('site.terms');

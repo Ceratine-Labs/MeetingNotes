@@ -472,8 +472,24 @@ html.mn-anim .mn-reveal.mn-in {
     background: var(--tblr-bg-surface);
 }
 
-/* --- Sticky navbar shadow ------------------------------------------------
-   app.js toggles .mn-nav-scrolled once the page moves, so the marketing
+/* --- Sticky marketing navbar ---------------------------------------------
+   An explicit surface background: Tabler's navbar is transparent here, which
+   reads fine collapsed but makes the expanded mobile menu paint its items
+   straight over the hero. A solid surface also keeps the wrapped second row
+   (theme toggle + CTAs) on narrow screens visually inside the bar. */
+
+.mn-site-nav {
+    background: var(--tblr-bg-surface);
+
+    /* The bar lives inside .page, a flex column pinned to the viewport, so
+       when the page is taller than the screen every flex item shrinks. On
+       phones the nav wraps to two rows (and taller still with the menu
+       open); with default shrink it gets squashed back to its 56px
+       min-height and the extra rows paint over the hero. */
+    flex-shrink: 0;
+}
+
+/* app.js toggles .mn-nav-scrolled once the page moves, so the marketing
    navbar reads as floating over content rather than fused to the hero. */
 
 .mn-nav-scrolled {
