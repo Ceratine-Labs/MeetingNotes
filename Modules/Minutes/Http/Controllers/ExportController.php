@@ -2,13 +2,20 @@
 
 namespace Modules\Minutes\Http\Controllers;
 
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Modules\Minutes\Models\Meeting;
 use Modules\Minutes\Services\MinutesExporter;
 
 class ExportController extends Controller
 {
-    public function download(Meeting $meeting, string $format, MinutesExporter $exporter)
+    /**
+     * Stream a minutes record as Markdown, PDF or Word.
+     *
+     * The format is constrained by the route pattern (md|pdf|docx), so the match
+     * below cannot be reached with an arbitrary value.
+     */
+    public function download(Meeting $meeting, string $format, MinutesExporter $exporter): Response
     {
         abort_unless($meeting->isReady(), 422, 'Minutes are not ready to export.');
 

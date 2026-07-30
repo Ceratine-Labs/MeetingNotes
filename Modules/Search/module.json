@@ -1,0 +1,12 @@
+{
+    "name": "Search",
+    "alias": "search",
+    "description": "Workspace-wide search across transcripts, minutes sections, decisions and action items, backed by a maintained search index",
+    "version": "1.0.0",
+    "priority": 35,
+    "system": false,
+    "providers": [
+        "Modules\\Search\\Providers\\SearchServiceProvider"
+    ],
+    "requires": ["Core", "Auth", "Tenancy", "Minutes"]
+}

@@ -22,10 +22,18 @@ class MinutesExporter
         return trim($base . ($date ? "-{$date}" : '')) . '.' . $extension;
     }
 
-    // ------------------------------------------------------------------
-    // Markdown
-    // ------------------------------------------------------------------
-
+    /**
+     * Render the minutes as Markdown.
+     *
+     * Available on every plan including free, deliberately: a customer must always
+     * be able to get their own minutes out of the product (see
+     * FeatureGate::BASELINE_EXPORTS). Markdown is the format for that promise
+     * because it needs no library to produce and no software to read.
+     *
+     * Built by hand from the canonical sections struct rather than by converting the
+     * rendered HTML — HTML-to-Markdown conversion loses the table structure that the
+     * action items section depends on.
+     */
     public function markdown(Meeting $meeting): string
     {
         $s = $meeting->sections;
@@ -210,10 +218,18 @@ class MinutesExporter
         return implode("\n", $out) . "\n";
     }
 
-    // ------------------------------------------------------------------
-    // PDF (mpdf — house standard)
-    // ------------------------------------------------------------------
-
+    /**
+     * Render the minutes as a PDF.
+     *
+     * Goes through the same Blade template as the on-screen document
+     * (minutes::export.pdf), so the PDF cannot drift from what the user approved.
+     *
+     * mpdf needs a writable temp directory and will fail confusingly without one —
+     * hence the explicit tempDir rather than relying on the system default, which is
+     * not writable under some PHP-FPM configurations.
+     *
+     * @return string Raw PDF bytes.
+     */
     public function pdf(Meeting $meeting): string
     {
         $mpdf = new \Mpdf\Mpdf([
@@ -229,10 +245,19 @@ class MinutesExporter
         return $mpdf->OutputBinaryData();
     }
 
-    // ------------------------------------------------------------------
-    // DOCX (PHPWord)
-    // ------------------------------------------------------------------
-
+    /**
+     * Render the minutes as a Word document.
+     *
+     * The format customers ask for most, because minutes usually get edited by
+     * someone else after circulation — a PDF cannot be, and that is the whole reason
+     * both exist.
+     *
+     * Composed element by element through PHPWord rather than from HTML: Word's HTML
+     * import produces documents with unpredictable styling that are unpleasant to
+     * edit, which defeats the point.
+     *
+     * @return string Raw .docx bytes.
+     */
     public function docx(Meeting $meeting): string
     {
         $s = $meeting->sections;

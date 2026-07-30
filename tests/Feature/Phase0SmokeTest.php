@@ -6,11 +6,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Auth\Models\User;
 use Modules\Core\Models\SeedRegistry;
 use Modules\Core\Services\SeedMaster;
+use Tests\Concerns\CreatesTenants;
 use Tests\TestCase;
 
 class Phase0SmokeTest extends TestCase
 {
     use RefreshDatabase;
+    use CreatesTenants;
 
     public function test_guest_is_redirected_to_login(): void
     {
@@ -22,17 +24,17 @@ class Phase0SmokeTest extends TestCase
         $this->get('/login')->assertOk()->assertSee('MeetingNotes');
     }
 
-    public function test_admin_can_log_in_and_reach_dashboard(): void
+    public function test_user_can_log_in_and_reach_dashboard(): void
     {
-        $user = User::query()->create([
-            'name' => 'Test Admin',
-            'email' => 'admin@test.local',
-            'password' => 'secret-password-1',
-            'role' => User::ROLE_ADMIN,
-        ]);
+        // tenantUser() gives them a workspace and a subscription — without those the
+        // `organisation` middleware redirects them to "create a workspace" and the
+        // dashboard assertion would fail for an unrelated reason.
+        [$user] = $this->tenantUser();
+
+        $user->forceFill(['password' => 'secret-password-1'])->save();
 
         $this->post('/login', [
-            'email' => 'admin@test.local',
+            'email' => $user->email,
             'password' => 'secret-password-1',
         ])->assertRedirect(route('core.dashboard'));
 
@@ -47,7 +49,7 @@ class Phase0SmokeTest extends TestCase
         $user = User::query()->create([
             'name' => 'UUID Check',
             'email' => 'uuid@test.local',
-            'password' => 'x',
+            'password' => 'x'
         ]);
 
         $this->assertMatchesRegularExpression(

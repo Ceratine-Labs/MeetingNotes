@@ -1,12 +1,18 @@
 {
     "name": "Minutes",
     "alias": "minutes",
-    "description": "Meetings, transcripts, extraction, generation pipeline, workspace UI",
+    "description": "Meetings, transcripts, extraction, generation pipeline, workspace UI. Organisation-scoped and quota-metered.",
     "version": "1.0.0",
     "priority": 30,
     "system": false,
     "providers": [
         "Modules\\Minutes\\Providers\\MinutesServiceProvider"
     ],
-    "requires": ["Core", "Auth", "Llm"]
+    "requires": [
+        "Core",
+        "Auth",
+        "Llm",
+        "Tenancy",
+        "Billing"
+    ]
 }

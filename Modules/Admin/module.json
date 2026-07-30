@@ -1,0 +1,12 @@
+{
+    "name": "Admin",
+    "alias": "admin",
+    "description": "SaaS back office on a separate guard and table: manage organisations, users, subscriptions, payments, plans, LLM configuration and backups",
+    "version": "1.0.0",
+    "priority": 95,
+    "system": true,
+    "providers": [
+        "Modules\\Admin\\Providers\\AdminServiceProvider"
+    ],
+    "requires": ["Core", "Auth", "Tenancy", "Billing"]
+}

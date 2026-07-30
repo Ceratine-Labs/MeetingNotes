@@ -2,11 +2,14 @@
 
 namespace Modules\Backup\Http\Controllers\Admin;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 use Modules\Backup\Jobs\RunBackupJob;
 use Modules\Core\Services\SettingsService;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BackupController extends Controller
 {
@@ -14,7 +17,10 @@ class BackupController extends Controller
     {
     }
 
-    public function index()
+    /**
+     * Existing backups and the schedule configuration.
+     */
+    public function index(): View
     {
         $disk = Storage::disk('backups');
         $appName = config('backup.backup.name');
@@ -41,7 +47,10 @@ class BackupController extends Controller
         ]);
     }
 
-    public function run(Request $request)
+    /**
+     * Take a backup now.
+     */
+    public function run(Request $request): RedirectResponse
     {
         RunBackupJob::dispatch($request->boolean('only_db'));
 
@@ -49,7 +58,14 @@ class BackupController extends Controller
             ->with('status', 'Backup queued — refresh in a minute to see it in the list.');
     }
 
-    public function download(Request $request)
+    /**
+     * Stream a backup archive to the browser.
+     *
+     * StreamedResponse rather than a plain Response: backup archives are large,
+     * and reading one into memory to return it would exhaust PHP's memory limit
+     * on exactly the deployments where backups matter most.
+     */
+    public function download(Request $request): StreamedResponse
     {
         $path = $request->string('path')->toString();
         $disk = Storage::disk('backups');
@@ -59,7 +75,10 @@ class BackupController extends Controller
         return $disk->download($path);
     }
 
-    public function destroy(Request $request)
+    /**
+     * Delete a backup file.
+     */
+    public function destroy(Request $request): RedirectResponse
     {
         $path = $request->string('path')->toString();
         $disk = Storage::disk('backups');
@@ -71,7 +90,10 @@ class BackupController extends Controller
         return redirect()->route('backup.admin.index')->with('status', 'Backup deleted.');
     }
 
-    public function updateSettings(Request $request)
+    /**
+     * Save the backup schedule and retention settings.
+     */
+    public function updateSettings(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'schedule_enabled' => ['nullable', 'boolean'],

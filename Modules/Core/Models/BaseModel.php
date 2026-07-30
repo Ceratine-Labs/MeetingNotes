@@ -2,6 +2,7 @@
 
 namespace Modules\Core\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Core\Traits\HasUuid;
@@ -42,10 +43,18 @@ abstract class BaseModel extends Model
     }
 
     /**
-     * Case-insensitive free-text search (PostgreSQL ILIKE, house
-     * convention). Caller passes columns that exist on the model.
+     * Case-insensitive free-text search (PostgreSQL ILIKE, house convention).
+     *
+     * The OR conditions are wrapped in their own closure so that chaining this
+     * onto an existing WHERE cannot widen it — without the nesting,
+     * `->where('status', 'x')->search(...)` would match rows of any status.
+     *
+     * @param  string  $search  Untrusted user input. Safe here because it is bound
+     *         as a parameter, not interpolated — but never build the $fields list
+     *         from request data, since column names cannot be bound.
+     * @param  list<string>  $fields  Columns to search. Must exist on the model.
      */
-    public function scopeSearch($query, string $search, array $fields = ['name'])
+    public function scopeSearch(Builder $query, string $search, array $fields = ['name']): Builder
     {
         return $query->where(function ($q) use ($search, $fields) {
             foreach ($fields as $field) {

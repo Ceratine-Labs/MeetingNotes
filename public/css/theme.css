@@ -1,0 +1,377 @@
+/*
+ * MeetingNotes theme layer — loaded AFTER vendor/tabler/css/tabler.min.css.
+ *
+ * How theming works here (see docs/THEMING.md for the full picture):
+ *
+ *   1. The server stamps data-bs-theme="light" or "dark" onto <html> while
+ *      rendering, from the user's saved preference (DB) or the theme cookie.
+ *      Nothing is decided in JS on the critical path, so there is no
+ *      flash-of-wrong-theme — which is the whole reason we do not use
+ *      Tabler's own tabler-theme.js (it decides in localStorage after paint).
+ *   2. Tabler already ships a complete light and dark variable set. This file
+ *      only *deepens* the dark set: stock Tabler dark bottoms out at
+ *      #111827 (gray-900), which Ryan finds too washed out. We push the whole
+ *      dark surface stack down toward black while keeping Tabler's semantic
+ *      variable names, so every Tabler component follows along for free.
+ *   3. Light is the default and is left almost entirely alone — Tabler's light
+ *      theme is already the look we want. We only soften the page background
+ *      so white cards read as raised rather than blending into the body.
+ *
+ * Rule for future sessions: express theme changes as --tblr-* variable
+ * overrides inside the theme blocks below. Do NOT restyle Tabler components
+ * directly (e.g. `.card { background: ... }`) — that breaks the other theme
+ * and every future Tabler upgrade.
+ */
+
+/* ==========================================================================
+   Light theme (default)
+   ========================================================================== */
+
+:root,
+[data-bs-theme='light'] {
+    /* Slightly cool off-white page so white cards/navbar read as elevated. */
+    --tblr-body-bg: #f4f6fa;
+    --tblr-bg-surface-secondary: #eef1f6;
+
+    /* Our own tokens — used by the custom blocks further down. Kept prefixed
+       so they can never collide with a Tabler variable in a later release. */
+    --mn-shell-border: var(--tblr-border-color);
+    --mn-hero-glow-a: rgba(6, 111, 209, 0.1);
+    --mn-hero-glow-b: rgba(47, 179, 68, 0.08);
+    --mn-code-bg: #eef1f6;
+    --mn-diff-add-bg: rgba(47, 179, 68, 0.12);
+    --mn-diff-add-border: rgba(47, 179, 68, 0.45);
+    --mn-diff-del-bg: rgba(214, 57, 57, 0.1);
+    --mn-diff-del-border: rgba(214, 57, 57, 0.4);
+}
+
+/* ==========================================================================
+   Deep dark theme
+
+   Surface ladder, darkest to lightest:
+     #04060a  page background        (--tblr-body-bg)
+     #0b0f16  cards, navbar, modals  (--tblr-bg-surface)
+     #111722  card headers, hovers   (--tblr-bg-surface-tertiary)
+     #1a2130  borders                (--tblr-border-color)
+   ========================================================================== */
+
+[data-bs-theme='dark'] {
+    color-scheme: dark;
+
+    /* Re-point the dark end of Tabler's gray ramp. Tabler derives surfaces,
+       borders and muted text from these, so overriding the ramp propagates
+       through components we never touch directly. */
+    --tblr-gray-600: #3d4757;
+    --tblr-gray-700: #2a3341;
+    --tblr-gray-800: #0b0f16;
+    --tblr-gray-900: #04060a;
+    --tblr-gray-950: #000203;
+
+    --tblr-body-bg: #04060a;
+    --tblr-body-bg-rgb: 4, 6, 10;
+    --tblr-body-color: #cbd5e1;
+    --tblr-body-color-rgb: 203, 213, 225;
+    --tblr-emphasis-color: #f8fafc;
+
+    --tblr-bg-surface: #0b0f16;
+    --tblr-bg-surface-secondary: #04060a;
+    --tblr-bg-surface-tertiary: #111722;
+    --tblr-bg-surface-dark: #000203;
+    --tblr-bg-forms: #0b0f16;
+
+    --tblr-secondary-bg: #111722;
+    --tblr-secondary-bg-rgb: 17, 23, 34;
+    --tblr-tertiary-bg: #0b0f16;
+    --tblr-secondary-color: rgba(203, 213, 225, 0.72);
+    --tblr-tertiary-color: rgba(203, 213, 225, 0.48);
+
+    --tblr-border-color: #1a2130;
+    --tblr-border-color-translucent: rgba(148, 176, 214, 0.13);
+
+    /* Lift link/primary text a notch — on a near-black page Tabler's stock
+       dark link blue sits just under comfortable contrast. */
+    --tblr-link-color: #6ea8e6;
+    --tblr-link-hover-color: #93c0ef;
+    --tblr-link-color-rgb: 110, 168, 230;
+    --tblr-link-hover-color-rgb: 147, 192, 239;
+
+    --mn-shell-border: #161d29;
+    --mn-hero-glow-a: rgba(6, 111, 209, 0.22);
+    --mn-hero-glow-b: rgba(47, 179, 68, 0.12);
+    --mn-code-bg: #0b0f16;
+    --mn-diff-add-bg: rgba(47, 179, 68, 0.16);
+    --mn-diff-add-border: rgba(47, 179, 68, 0.5);
+    --mn-diff-del-bg: rgba(214, 57, 57, 0.16);
+    --mn-diff-del-border: rgba(214, 57, 57, 0.5);
+}
+
+/* Tabler renders some inputs against --tblr-bg-forms but the browser's own
+   autofill styling overrides it with a hardcoded near-white. Repaint autofill
+   using an inset shadow (the only property autofill honours). */
+[data-bs-theme='dark'] input:-webkit-autofill,
+[data-bs-theme='dark'] input:-webkit-autofill:hover,
+[data-bs-theme='dark'] input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--tblr-bg-forms) inset;
+    -webkit-text-fill-color: var(--tblr-body-color);
+    caret-color: var(--tblr-body-color);
+}
+
+/* ==========================================================================
+   Application shell
+   ========================================================================== */
+
+body {
+    font-feature-settings: 'cv03', 'cv04', 'cv11'; /* Inter's nicer 1/l/a forms */
+}
+
+/* Sidebar is a fixed rail on desktop; Tabler's stock navbar-vertical scrolls
+   with the page, which loses the nav on long minutes documents. */
+@media (min-width: 992px) {
+    .navbar-vertical.navbar-expand-lg {
+        border-right: 1px solid var(--mn-shell-border);
+    }
+}
+
+/* Active nav item gets a left accent bar rather than a filled pill — reads
+   better against the deep dark background than a solid block of primary. */
+.navbar-vertical .nav-link.active {
+    position: relative;
+    color: var(--tblr-primary);
+    background: var(--tblr-bg-surface-tertiary);
+}
+
+.navbar-vertical .nav-link.active::before {
+    content: '';
+    position: absolute;
+    inset-block: 0.25rem;
+    inset-inline-start: 0;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--tblr-primary);
+}
+
+/* Section captions in the DB-driven sidebar (MenuService section names). */
+.nav-section-title {
+    padding: 0.75rem 0.75rem 0.25rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tblr-tertiary-color);
+}
+
+/* ==========================================================================
+   Marketing / public pages
+   ========================================================================== */
+
+/* Soft radial wash behind the landing hero. Colours come from theme tokens so
+   it deepens automatically in dark mode instead of glowing white. */
+.mn-hero {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(60rem 30rem at 15% -10%, var(--mn-hero-glow-a), transparent 70%),
+        radial-gradient(50rem 25rem at 85% 10%, var(--mn-hero-glow-b), transparent 70%);
+}
+
+/* Nine numbered section chips on the landing page ("what you get back"). */
+.mn-section-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--tblr-primary);
+    background: var(--tblr-primary-bg-subtle);
+    border: 1px solid var(--tblr-primary-border-subtle);
+}
+
+/* Pricing: lift the recommended plan without changing document order. */
+.mn-plan-featured {
+    border-color: var(--tblr-primary);
+    box-shadow: 0 0 0 1px var(--tblr-primary);
+}
+
+/* ==========================================================================
+   Minutes document rendering
+
+   Minutes are stored as a SQL struct and rendered to canonical HTML server
+   side. These rules style that rendered output; they must stay generic
+   because the HTML is produced by a Blade template, not hand-authored.
+   ========================================================================== */
+
+.mn-minutes {
+    max-width: 62rem;
+}
+
+.mn-minutes h2 {
+    padding-bottom: 0.4rem;
+    margin-top: 2rem;
+    border-bottom: 1px solid var(--tblr-border-color);
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.mn-minutes h2:first-child {
+    margin-top: 0;
+}
+
+.mn-minutes table {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+/* "[Not specified]" markers from the generator — visibly incomplete, on
+   purpose, so the user knows the transcript did not cover it. */
+.mn-minutes .mn-not-specified {
+    color: var(--tblr-tertiary-color);
+    font-style: italic;
+}
+
+/* Regenerate-with-diff review view. */
+.mn-diff-add {
+    background: var(--mn-diff-add-bg);
+    border-left: 3px solid var(--mn-diff-add-border);
+    padding: 0.25rem 0.5rem;
+}
+
+.mn-diff-del {
+    background: var(--mn-diff-del-bg);
+    border-left: 3px solid var(--mn-diff-del-border);
+    padding: 0.25rem 0.5rem;
+    text-decoration: line-through;
+    opacity: 0.75;
+}
+
+/* Transcript viewer — long, monospace-ish, needs its own scroll container. */
+.mn-transcript {
+    max-height: 32rem;
+    overflow-y: auto;
+    padding: 1rem;
+    border-radius: var(--tblr-border-radius);
+    background: var(--mn-code-bg);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* ==========================================================================
+   Third-party widget theming
+
+   SweetAlert2 and Tom Select both ship their own colour decisions. Bind them
+   to Tabler variables so they follow the active theme instead of needing a
+   per-theme JS config object at every call site.
+   ========================================================================== */
+
+.swal2-popup {
+    background: var(--tblr-bg-surface) !important;
+    color: var(--tblr-body-color) !important;
+    border: 1px solid var(--tblr-border-color);
+    border-radius: var(--tblr-border-radius-lg);
+    font-family: var(--tblr-body-font-family);
+}
+
+.swal2-title,
+.swal2-html-container {
+    color: var(--tblr-body-color) !important;
+}
+
+.ts-control,
+.ts-dropdown {
+    background: var(--tblr-bg-forms) !important;
+    color: var(--tblr-body-color) !important;
+    border-color: var(--tblr-border-color) !important;
+}
+
+.ts-dropdown .active {
+    background: var(--tblr-bg-surface-tertiary) !important;
+    color: var(--tblr-body-color) !important;
+}
+
+/* ==========================================================================
+   Print — minutes get printed and PDF'd by users; strip the app chrome.
+   ========================================================================== */
+
+@media print {
+    .navbar,
+    .navbar-vertical,
+    .mn-no-print,
+    .btn {
+        display: none !important;
+    }
+
+    .page-wrapper {
+        margin: 0 !important;
+    }
+
+    .mn-minutes {
+        max-width: none;
+    }
+}
+
+/* ==========================================================================
+   Navbar workspace search
+
+   The dropdown is positioned by CSS rather than Bootstrap's dropdown JS: it is
+   opened programmatically from the debounced fetch, and Popper would need a
+   manual instance for something that only ever appears directly below a
+   full-width input.
+   ========================================================================== */
+
+.mn-search {
+    position: relative;
+}
+
+.mn-search-results {
+    display: block; /* Visibility is controlled by the [hidden] attribute. */
+    position: absolute;
+    inset-inline: 0;
+    top: calc(100% + 0.25rem);
+    max-height: 26rem;
+    overflow-y: auto;
+    z-index: 1030; /* Above the sticky navbar. */
+    padding: 0;
+}
+
+.mn-search-results[hidden] {
+    display: none;
+}
+
+/* Results are multi-line (title, label, snippet), so the default single-line
+   dropdown-item padding and nowrap are both wrong here. */
+.mn-search-result {
+    white-space: normal;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--tblr-border-color);
+}
+
+.mn-search-result:last-of-type {
+    border-bottom: 0;
+}
+
+/* Spinner shown in the input's icon slot while a search is in flight. Defined
+   here rather than reusing Tabler's .spinner-border because it has to animate a
+   font icon in place, not replace it with a bordered box. */
+.mn-spin {
+    display: inline-block;
+    animation: mn-spin 0.9s linear infinite;
+}
+
+@keyframes mn-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Respect a reduced-motion preference — a spinner is decoration, not
+   information, and the icon swap alone still signals activity. */
+@media (prefers-reduced-motion: reduce) {
+    .mn-spin {
+        animation: none;
+    }
+}

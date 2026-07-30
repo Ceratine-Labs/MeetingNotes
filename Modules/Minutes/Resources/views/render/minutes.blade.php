@@ -1,10 +1,10 @@
-{{-- ============================================================
+{{--
      Canonical minutes render. $s = validated sections struct.
      The LLM NEVER produces this HTML — it fills the struct, this
      template renders it. That is what makes every minutes record
      structurally identical. Changes here re-render on next
      (re)generation; use a data migration to re-render historic rows.
-     ============================================================ --}}
+--}}
 @php
     $info = $s['meeting_info'] ?? [];
     $att = $s['attendance'] ?? [];

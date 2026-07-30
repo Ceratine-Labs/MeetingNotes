@@ -2,6 +2,7 @@
 
 namespace Modules\Minutes\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Modules\Minutes\Jobs\RegenerateSectionJob;
@@ -17,7 +18,14 @@ use Modules\Minutes\Support\MinutesSchema;
  */
 class SectionController extends Controller
 {
-    public function update(Request $request, Meeting $meeting, string $section, MinutesGenerator $generator)
+    /**
+     * Save a hand-edited section.
+     *
+     * Re-validates the whole canonical structure, not just the edited section: the
+     * rendered HTML and the decision/action rows are rebuilt from it, and a partial
+     * check would let an invalid document through.
+     */
+    public function update(Request $request, Meeting $meeting, string $section, MinutesGenerator $generator): JsonResponse
     {
         $this->ensureReady($meeting);
         $this->ensureKnownSection($section);
@@ -39,7 +47,13 @@ class SectionController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    public function regenerate(Meeting $meeting, string $section)
+    /**
+     * Ask the model to redo one section, in the background.
+     *
+     * The result is parked as a proposal for the user to accept or discard — the
+     * existing minutes are never overwritten in place.
+     */
+    public function regenerate(Meeting $meeting, string $section): JsonResponse
     {
         $this->ensureReady($meeting);
         $this->ensureKnownSection($section);
@@ -47,12 +61,15 @@ class SectionController extends Controller
         abort_if($meeting->regen_section !== null, 422, 'A section regeneration is already running.');
 
         $meeting->update(['regen_section' => $section, 'section_proposal' => null]);
-        RegenerateSectionJob::dispatch($meeting->id, $section);
+        RegenerateSectionJob::dispatch($meeting->id, $section, $meeting->organisation_id);
 
         return response()->json(['ok' => true]);
     }
 
-    public function accept(Meeting $meeting, MinutesGenerator $generator)
+    /**
+     * Adopt a regenerated section, replacing the current one.
+     */
+    public function accept(Meeting $meeting, MinutesGenerator $generator): JsonResponse
     {
         $this->ensureReady($meeting);
 
@@ -74,7 +91,10 @@ class SectionController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    public function discard(Meeting $meeting)
+    /**
+     * Throw away a regenerated section and keep the original.
+     */
+    public function discard(Meeting $meeting): JsonResponse
     {
         $meeting->update(['section_proposal' => null, 'regen_section' => null]);
 
@@ -85,7 +105,10 @@ class SectionController extends Controller
      * Renders a proposal for the diff view: current vs proposed HTML
      * for just the affected section.
      */
-    public function proposal(Meeting $meeting, MinutesGenerator $generator)
+    /**
+     * Fetch a pending proposal, rendered for side-by-side comparison.
+     */
+    public function proposal(Meeting $meeting, MinutesGenerator $generator): JsonResponse
     {
         $proposal = $meeting->section_proposal;
         abort_if($proposal === null, 404);

@@ -1,0 +1,12 @@
+{
+    "name": "Tenancy",
+    "alias": "tenancy",
+    "description": "Organisation workspaces: organisations, memberships, roles, invitations, and the organisation scope every tenant-owned model is filtered by",
+    "version": "1.0.0",
+    "priority": 5,
+    "system": true,
+    "providers": [
+        "Modules\\Tenancy\\Providers\\TenancyServiceProvider"
+    ],
+    "requires": ["Core"]
+}

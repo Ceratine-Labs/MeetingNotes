@@ -1,0 +1,12 @@
+{
+    "name": "Site",
+    "alias": "site",
+    "description": "Public marketing face: landing page, how-it-works, pricing (rendered from the plans table), terms and privacy. Named Site rather than Public because `public` is a PHP reserved word and cannot be a namespace segment.",
+    "version": "1.0.0",
+    "priority": 90,
+    "system": false,
+    "providers": [
+        "Modules\\Site\\Providers\\SiteServiceProvider"
+    ],
+    "requires": ["Core", "Billing"]
+}

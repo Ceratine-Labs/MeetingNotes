@@ -1,0 +1,12 @@
+{
+    "name": "Billing",
+    "alias": "billing",
+    "description": "Tiered subscriptions: plans, Paystack checkout and webhooks, subscription lifecycle, generation quota metering and enforcement",
+    "version": "1.0.0",
+    "priority": 25,
+    "system": false,
+    "providers": [
+        "Modules\\Billing\\Providers\\BillingServiceProvider"
+    ],
+    "requires": ["Core", "Auth", "Tenancy"]
+}

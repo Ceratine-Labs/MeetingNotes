@@ -4,25 +4,38 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Modules\Admin\Models\AdminUser;
 use Modules\Auth\Models\User;
 use Modules\Core\Models\Setting;
 use Modules\Llm\Models\GenerationRun;
 use Modules\Llm\Models\PromptTemplate;
 use Modules\Llm\Services\LlmManager;
+use Tests\Concerns\CreatesTenants;
 use Tests\TestCase;
 
 class LlmModuleTest extends TestCase
 {
     use RefreshDatabase;
+    use CreatesTenants;
 
-    protected function admin(): User
+    /**
+     * A back-office account.
+     *
+     * These screens are staff tools behind the `admin` guard, not customer features —
+     * so this is an AdminUser from the separate `admins` table, and requests must be
+     * made with actingAs($admin, 'admin'). A customer session has no standing here.
+     */
+    protected ?AdminUser $adminAccount = null;
+
+    protected function admin(): AdminUser
     {
-        return User::query()->create([
-            'name' => 'Admin',
-            'email' => 'a@test.local',
-            'password' => 'x',
-            'role' => User::ROLE_ADMIN,
-        ]);
+        // Memoised deliberately. It previously minted a fresh account per call, which
+        // now breaks a test that makes two requests: AuthenticateSession stamps the
+        // authenticated user's password hash into the session and re-checks it, so
+        // swapping in a *different* account mid-session is correctly treated as a
+        // hijacked session and evicted. Reusing one account is also what a real
+        // administrator does.
+        return $this->adminAccount ??= $this->adminUser();
     }
 
     protected function regularUser(): User
@@ -30,27 +43,32 @@ class LlmModuleTest extends TestCase
         return User::query()->create([
             'name' => 'User',
             'email' => 'u@test.local',
-            'password' => 'x',
-            'role' => User::ROLE_USER,
+            'password' => 'x'
         ]);
     }
 
-    public function test_llm_settings_require_admin_role(): void
+    public function test_llm_settings_require_a_back_office_session(): void
     {
-        $this->actingAs($this->regularUser())->get('/app/admin/llm')->assertForbidden();
-        $this->actingAs($this->admin())->get('/app/admin/llm')->assertOk();
+        // A customer session is redirected to the STAFF login, not 403'd. That is
+        // deliberate: a redirect does not confirm to a random customer that the area
+        // exists, and it is the AuthenticateAdmin middleware's documented behaviour.
+        $this->actingAs($this->regularUser())
+            ->get('/admin/llm')
+            ->assertRedirect(route('admin.login'));
+
+        $this->actingAs($this->admin(), 'admin')->get('/admin/llm')->assertOk();
     }
 
     public function test_api_key_is_encrypted_at_rest_and_never_rendered(): void
     {
         $admin = $this->admin();
 
-        $this->actingAs($admin)->put('/app/admin/llm', [
+        $this->actingAs($admin, 'admin')->put('/admin/llm', [
             'provider' => 'anthropic',
             'temperature' => 0.2,
             'max_tokens' => 8192,
             'timeout' => 300,
-            'anthropic_api_key' => 'sk-ant-secret-test-key-1234',
+            'anthropic_api_key' => 'sk-ant-secret-test-key-1234'
         ])->assertRedirect();
 
         $row = Setting::query()->where('key', 'llm.anthropic.api_key')->first();
@@ -60,7 +78,7 @@ class LlmModuleTest extends TestCase
         $this->assertSame('sk-ant-secret-test-key-1234', setting('llm.anthropic.api_key'));
 
         // The settings page must never echo the key — only the hint.
-        $html = $this->actingAs($admin)->get('/app/admin/llm')->getContent();
+        $html = $this->actingAs($admin, 'admin')->get('/admin/llm')->getContent();
         $this->assertStringNotContainsString('sk-ant-secret-test-key-1234', $html);
         $this->assertStringContainsString('ends in …1234', $html);
     }
@@ -69,12 +87,12 @@ class LlmModuleTest extends TestCase
     {
         setting_service()->set('llm.anthropic.api_key', 'sk-ant-original', 'llm', encrypt: true);
 
-        $this->actingAs($this->admin())->put('/app/admin/llm', [
+        $this->actingAs($this->admin(), 'admin')->put('/admin/llm', [
             'provider' => 'anthropic',
             'temperature' => 0.3,
             'max_tokens' => 4096,
             'timeout' => 120,
-            'anthropic_api_key' => '',
+            'anthropic_api_key' => ''
         ])->assertRedirect();
 
         $this->assertSame('sk-ant-original', setting('llm.anthropic.api_key'));
@@ -86,11 +104,11 @@ class LlmModuleTest extends TestCase
             'name' => 'minutes.generate',
             'version' => 1,
             'body' => 'original body',
-            'is_active' => true,
+            'is_active' => true
         ]);
 
-        $this->actingAs($this->admin())
-            ->post("/app/admin/prompts/{$v1->id}/versions", ['body' => 'updated body'])
+        $this->actingAs($this->admin(), 'admin')
+            ->post("/admin/prompts/{$v1->id}/versions", ['body' => 'updated body'])
             ->assertRedirect();
 
         $this->assertSame(2, PromptTemplate::query()->where('name', 'minutes.generate')->count());
@@ -111,10 +129,10 @@ class LlmModuleTest extends TestCase
             'api.anthropic.com/*' => Http::response([
                 'model' => 'claude-sonnet-4-6',
                 'content' => [
-                    ['type' => 'tool_use', 'name' => 'emit_result', 'input' => ['title' => 'Weekly Sync']],
+                    ['type' => 'tool_use', 'name' => 'emit_result', 'input' => ['title' => 'Weekly Sync']]
                 ],
-                'usage' => ['input_tokens' => 1000, 'output_tokens' => 500],
-            ]),
+                'usage' => ['input_tokens' => 1000, 'output_tokens' => 500]
+            ])
         ]);
 
         $response = app(LlmManager::class)->structured(
@@ -140,7 +158,7 @@ class LlmModuleTest extends TestCase
         setting_service()->set('llm.anthropic.api_key', 'sk-test', 'llm', encrypt: true);
 
         Http::fake([
-            'api.anthropic.com/*' => Http::response(['error' => ['message' => 'invalid x-api-key']], 401),
+            'api.anthropic.com/*' => Http::response(['error' => ['message' => 'invalid x-api-key']], 401)
         ]);
 
         try {
@@ -161,7 +179,7 @@ class LlmModuleTest extends TestCase
         setting_service()->set('llm.anthropic.api_key', 'sk-bad', 'llm', encrypt: true);
 
         Http::fake([
-            'api.anthropic.com/*' => Http::response(['error' => ['message' => 'nope']], 401),
+            'api.anthropic.com/*' => Http::response(['error' => ['message' => 'nope']], 401)
         ]);
 
         $result = app(LlmManager::class)->testConnection();

@@ -1,4 +1,4 @@
-@extends('core::layouts.app')
+@extends('admin::layouts.app')
 
 @section('title', 'LLM Settings — MeetingNotes')
 

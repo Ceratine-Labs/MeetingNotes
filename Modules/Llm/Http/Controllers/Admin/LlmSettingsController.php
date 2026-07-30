@@ -2,8 +2,11 @@
 
 namespace Modules\Llm\Http\Controllers\Admin;
 
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\View\View;
 use Modules\Core\Services\SettingsService;
 use Modules\Llm\Services\LlmManager;
 
@@ -13,7 +16,10 @@ class LlmSettingsController extends Controller
     {
     }
 
-    public function edit()
+    /**
+     * Provider configuration form.
+     */
+    public function edit(): View
     {
         return view('llm::admin.settings', [
             'providers' => config('llm.providers'),
@@ -38,7 +44,10 @@ class LlmSettingsController extends Controller
         ]);
     }
 
-    public function update(Request $request)
+    /**
+     * Save provider configuration.
+     */
+    public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'provider' => ['required', 'in:' . implode(',', array_keys(config('llm.providers')))],
@@ -81,7 +90,10 @@ class LlmSettingsController extends Controller
         return redirect()->route('llm.admin.settings')->with('status', 'LLM settings saved.');
     }
 
-    public function testConnection(LlmManager $manager)
+    /**
+     * Make a live call against the configured provider and report the result.
+     */
+    public function testConnection(LlmManager $manager): JsonResponse
     {
         return response()->json($manager->testConnection());
     }

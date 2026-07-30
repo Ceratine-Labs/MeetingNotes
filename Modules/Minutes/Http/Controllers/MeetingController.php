@@ -2,9 +2,12 @@
 
 namespace Modules\Minutes\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 use Modules\Minutes\Jobs\GenerateMinutesJob;
 use Modules\Minutes\Models\Meeting;
 use Modules\Minutes\Services\ExtractionException;
@@ -12,7 +15,13 @@ use Modules\Minutes\Services\TranscriptExtractor;
 
 class MeetingController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * The workspace's minutes library, newest first.
+     *
+     * Organisation-scoped automatically by the Meeting model, so this returns only
+     * the current workspace's records with no explicit where clause.
+     */
+    public function index(Request $request): View
     {
         $meetings = Meeting::query()
             ->when($request->filled('q'), fn ($q) => $q->search($request->string('q'), ['title']))
@@ -25,14 +34,23 @@ class MeetingController extends Controller
         return view('minutes::index', compact('meetings'));
     }
 
-    public function create()
+    /**
+     * The paste-or-upload form.
+     */
+    public function create(): View
     {
         return view('minutes::create', [
             'supported' => TranscriptExtractor::SUPPORTED,
         ]);
     }
 
-    public function store(Request $request, TranscriptExtractor $extractor)
+    /**
+     * Accept a transcript and queue generation.
+     *
+     * Returns a redirect in every case, including validation failure of the uploaded
+     * file, so the user always lands somewhere meaningful.
+     */
+    public function store(Request $request, TranscriptExtractor $extractor): RedirectResponse
     {
         $validated = $request->validate([
             'mode' => ['required', 'in:paste,upload'],
@@ -81,12 +99,17 @@ class MeetingController extends Controller
             'token_estimate' => (int) ceil(mb_strlen($text) / 4),
         ]);
 
-        GenerateMinutesJob::dispatch($meeting->id);
+        // organisation_id is passed explicitly so the worker binds the tenant
+        // BEFORE it loads the meeting — see GenerateMinutesJob.
+        GenerateMinutesJob::dispatch($meeting->id, $meeting->organisation_id);
 
         return redirect()->route('minutes.show', $meeting);
     }
 
-    public function show(Meeting $meeting)
+    /**
+     * One minutes record.
+     */
+    public function show(Meeting $meeting): View
     {
         $meeting->load(['transcript', 'decisions', 'actionItems']);
 
@@ -96,7 +119,12 @@ class MeetingController extends Controller
     /**
      * Polled by the workspace while processing.
      */
-    public function status(Meeting $meeting)
+    /**
+     * Polled by the workspace while generation runs.
+     *
+     * Deliberately tiny — it is hit every couple of seconds per open tab.
+     */
+    public function status(Meeting $meeting): JsonResponse
     {
         return response()->json([
             'status' => $meeting->status,
@@ -107,7 +135,10 @@ class MeetingController extends Controller
         ]);
     }
 
-    public function retry(Meeting $meeting)
+    /**
+     * Re-queue a failed generation.
+     */
+    public function retry(Meeting $meeting): RedirectResponse
     {
         abort_unless($meeting->status === Meeting::STATUS_FAILED, 422, 'Only failed meetings can be retried.');
 
@@ -117,12 +148,15 @@ class MeetingController extends Controller
             'error' => null,
         ]);
 
-        GenerateMinutesJob::dispatch($meeting->id);
+        GenerateMinutesJob::dispatch($meeting->id, $meeting->organisation_id);
 
         return redirect()->route('minutes.show', $meeting);
     }
 
-    public function destroy(Meeting $meeting)
+    /**
+     * Delete a record, its transcript and any uploaded source file.
+     */
+    public function destroy(Meeting $meeting): RedirectResponse
     {
         if ($meeting->transcript?->file_path) {
             Storage::delete($meeting->transcript->file_path);

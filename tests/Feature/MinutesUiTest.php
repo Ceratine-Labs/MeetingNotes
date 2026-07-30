@@ -5,33 +5,36 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Auth\Models\User;
 use Modules\Minutes\Models\Meeting;
+use Modules\Tenancy\Models\Organisation;
+use Tests\Concerns\CreatesTenants;
 use Tests\TestCase;
 
 class MinutesUiTest extends TestCase
 {
     use RefreshDatabase;
+    use CreatesTenants;
+
+    /**
+     * The workspace every meeting in this test belongs to.
+     *
+     * Held on the instance because user() and meeting() have to agree about it — a
+     * meeting created in a different workspace to the acting user is filtered out by
+     * the organisation scope, and the assertions would then fail for a reason that has
+     * nothing to do with the UI being tested.
+     */
+    protected ?Organisation $workspace = null;
 
     protected function user(): User
     {
-        return User::query()->create([
-            'name' => 'U',
-            'email' => uniqid() . '@test.local',
-            'password' => 'x',
-            'role' => User::ROLE_USER,
-        ]);
+        [$user, $organisation] = $this->tenantUser();
+        $this->workspace = $organisation;
+
+        return $user;
     }
 
     protected function meeting(User $user, array $attributes = []): Meeting
     {
-        $meeting = Meeting::query()->create(array_merge([
-            'user_id' => $user->id,
-            'source_type' => 'paste',
-            'status' => Meeting::STATUS_PROCESSING,
-        ], $attributes));
-
-        $meeting->transcript()->create(['raw_text' => 'Sarah: hello everyone…']);
-
-        return $meeting;
+        return $this->tenantMeeting($user, $this->workspace, $attributes);
     }
 
     public function test_library_renders_with_meetings_and_empty_state(): void
@@ -77,7 +80,7 @@ class MinutesUiTest extends TestCase
         $ready = $this->meeting($user, [
             'status' => Meeting::STATUS_READY,
             'title' => 'Board catch-up',
-            'rendered_html' => '<article class="mn-minutes"><h2>1. Meeting Information</h2></article>',
+            'rendered_html' => '<article class="mn-minutes"><h2>1. Meeting Information</h2></article>'
         ]);
         $this->actingAs($user)->get("/app/minutes/{$ready->id}")
             ->assertOk()

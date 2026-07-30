@@ -1,0 +1,60 @@
+/*
+ * Inter Variable — self-hosted subset.
+ *
+ * Tabler's --tblr-font-sans-serif stack asks for "Inter Var" first, so the UI
+ * only looks like Tabler if Inter is actually present. We serve it ourselves
+ * rather than from Google/Bunny fonts: the house rule is that nothing in the
+ * page render path may depend on a third-party host.
+ *
+ * Subset rationale — we ship latin + latin-ext (normal) and latin (italic)
+ * only. The upstream @fontsource-variable/inter package also carries cyrillic,
+ * greek and vietnamese ranges; the UI and product copy are English/Afrikaans,
+ * so those would be ~200 KB of never-requested bytes. If the app ever needs
+ * another script, copy the matching .woff2 out of the npm package and add the
+ * @font-face block here (see docs/VENDOR_ASSETS.md for the re-fetch recipe).
+ *
+ * The family is registered under BOTH "Inter Variable" (fontsource's name) and
+ * "Inter Var" (the name Tabler's stack expects) so either spelling resolves.
+ */
+
+/* latin-ext — accented Latin, currency symbols, phonetic ranges */
+@font-face {
+    font-family: 'Inter Variable';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url(./files/inter-latin-ext-wght-normal.woff2) format('woff2-variations');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+        U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* latin — the range that covers essentially every byte we actually render */
+@font-face {
+    font-family: 'Inter Variable';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url(./files/inter-latin-wght-normal.woff2) format('woff2-variations');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+        U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* latin italic — used for muted/quoted text and the transcript viewer */
+@font-face {
+    font-family: 'Inter Variable';
+    font-style: italic;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url(./files/inter-latin-wght-italic.woff2) format('woff2-variations');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+        U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Alias for Tabler's expected family name — same files, no extra download. */
+@font-face {
+    font-family: 'Inter Var';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url(./files/inter-latin-wght-normal.woff2) format('woff2-variations');
+}

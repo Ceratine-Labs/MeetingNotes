@@ -2,10 +2,13 @@
 
 namespace Modules\Minutes\Services;
 
+use Modules\Billing\Services\QuotaService;
 use Modules\Llm\Models\PromptTemplate;
 use Modules\Llm\Services\LlmManager;
 use Modules\Minutes\Models\Meeting;
 use Modules\Minutes\Support\MinutesSchema;
+use Modules\Search\Services\SearchIndexer;
+use Modules\Tenancy\Models\Organisation;
 
 /**
  * The generation pipeline: transcript → (single pass | map-reduce) →
@@ -13,6 +16,13 @@ use Modules\Minutes\Support\MinutesSchema;
  *
  * Called from GenerateMinutesJob; every LLM call is logged by
  * LlmManager into generation_runs.
+ *
+ * Quota enforcement lives here, in the service, and not in the controller. Both
+ * the initial generation and the retry path run through a queued job, so a
+ * controller-only check would leave the expensive work unmetered — and this method
+ * is the last point before real money is spent on an LLM call. The credit is
+ * recorded only after the minutes are persisted, so a failed generation is never
+ * charged.
  */
 class MinutesGenerator
 {
@@ -29,11 +39,30 @@ class MinutesGenerator
     public function __construct(
         protected LlmManager $llm,
         protected MinutesRenderer $renderer,
+        protected QuotaService $quota,
+        protected SearchIndexer $searchIndexer,
     ) {
     }
 
+    /**
+     * Generate minutes for a meeting, metering the organisation's allowance.
+     *
+     * @throws \Modules\Billing\Exceptions\QuotaExceededException Before any LLM
+     *         call is made, when the organisation has no allowance left. The
+     *         exception carries the QuotaStatus so the caller can tell the customer
+     *         what their limit is and offer an upgrade.
+     */
     public function generate(Meeting $meeting): void
     {
+        $organisation = $meeting->organisation;
+
+        // Checked BEFORE the first LLM call, so an over-quota organisation costs us
+        // nothing. Throws rather than returning false: silently producing no minutes
+        // would leave the meeting stuck in "processing" with no explanation.
+        if ($organisation !== null) {
+            $this->quota->assertCanGenerate($organisation);
+        }
+
         $transcript = $meeting->transcript;
         $text = $transcript->raw_text;
 
@@ -46,6 +75,34 @@ class MinutesGenerator
         }
 
         $this->persist($meeting, $sections);
+
+        // Recorded only now — after the minutes exist. Anything that threw above
+        // never reaches this line, which is what guarantees a customer is not
+        // charged a credit for our failure or a provider timeout.
+        if ($organisation !== null) {
+            $this->recordConsumption($meeting, $organisation);
+        }
+    }
+
+    /**
+     * Write the metering ledger entry for a completed generation.
+     *
+     * A failure to record must not fail the request: the customer's minutes are
+     * already saved, and throwing here would show them an error for work that
+     * succeeded. Reported instead, so the gap is visible without being destructive.
+     */
+    protected function recordConsumption(Meeting $meeting, Organisation $organisation): void
+    {
+        try {
+            $this->quota->recordUsage(
+                organisation: $organisation,
+                meetingId: $meeting->getKey(),
+                userId: $meeting->user_id,
+                modelUsed: $meeting->model_used,
+            );
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     protected function singlePass(Meeting $meeting, string $text, string $userContext): array
@@ -183,6 +240,32 @@ class MinutesGenerator
             'progress_stage' => null,
             'error' => null,
         ]);
+
+        $this->reindexForSearch($meeting);
+    }
+
+    /**
+     * Refresh this meeting's search index rows.
+     *
+     * Called from persist() so it covers every path that changes the document: initial
+     * generation, a hand edit, and an accepted section regeneration. Hooking it here
+     * rather than at each call site is what stops one of those three quietly going
+     * unindexed.
+     *
+     * Failures are reported and swallowed. The minutes are saved by this point, and a
+     * search index is derived data — losing a row means one document is briefly missing
+     * from search (recoverable with `php artisan search:reindex`), whereas throwing here
+     * would fail a request whose real work already succeeded.
+     */
+    protected function reindexForSearch(Meeting $meeting): void
+    {
+        try {
+            // Reloaded because the indexer reads the typed decision and action rows that
+            // persist() just rebuilt; a stale relation would index the previous set.
+            $this->searchIndexer->index($meeting->fresh(['transcript', 'decisions', 'actionItems']));
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     /**

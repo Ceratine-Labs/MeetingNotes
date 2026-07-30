@@ -1,45 +1,61 @@
-<!doctype html>
-<html lang="en" data-bs-theme="dark">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Sign in — MeetingNotes</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-</head>
-<body class="d-flex align-items-center justify-content-center" style="min-height: 100vh;">
-    <div class="card shadow" style="width: 380px;">
-        <div class="card-body p-4">
-            <div class="text-center mb-4">
-                <i class="bi bi-journal-text fs-1 text-primary"></i>
-                <h1 class="h4 mt-2">MeetingNotes</h1>
-                <p class="text-secondary small mb-0">Sign in to your account</p>
-            </div>
-            <form method="POST" action="{{ route('auth.login.attempt') }}">
-                @csrf
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" name="email" id="email" value="{{ old('email') }}"
-                           class="form-control @error('email') is-invalid @enderror" required autofocus>
-                    @error('email')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" name="password" id="password"
-                           class="form-control @error('password') is-invalid @enderror" required>
-                    @error('password')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="form-check mb-3">
-                    <input type="checkbox" name="remember" id="remember" class="form-check-input">
-                    <label for="remember" class="form-check-label">Remember me</label>
-                </div>
-                <button class="btn btn-primary w-100">Sign in</button>
-            </form>
+@extends('core::layouts.guest')
+
+@section('title', 'Log in — ' . config('app.name'))
+@section('heading', 'Log in to your account')
+
+@section('content')
+    <form method="POST" action="{{ route('auth.login.attempt') }}" autocomplete="on">
+        @csrf
+
+        {{-- Preserved across the POST so a user who arrived from an invite link
+             lands back on the invitation after signing in. --}}
+        @if ($invitationToken)
+            <input type="hidden" name="invitation" value="{{ $invitationToken }}">
+        @endif
+
+        <div class="mb-3">
+            <label for="email" class="form-label">Email address</label>
+            <input type="email" name="email" id="email" value="{{ old('email') }}"
+                   class="form-control @error('email') is-invalid @enderror"
+                   placeholder="you@company.com" autocomplete="email" required autofocus>
+            @error('email')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
-    </div>
-</body>
-</html>
+
+        <div class="mb-2">
+            <label for="password" class="form-label">
+                Password
+                <span class="form-label-description">
+                    <a href="{{ route('password.request') }}">Forgot password?</a>
+                </span>
+            </label>
+            <input type="password" name="password" id="password"
+                   class="form-control @error('password') is-invalid @enderror"
+                   placeholder="Your password" autocomplete="current-password" required>
+            @error('password')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
+
+        <div class="mb-3">
+            <label class="form-check">
+                <input type="checkbox" name="remember" class="form-check-input" value="1"
+                    @checked(old('remember'))>
+                <span class="form-check-label">Keep me signed in</span>
+            </label>
+        </div>
+
+        <div class="form-footer">
+            <button type="submit" class="btn btn-primary w-100">Log in</button>
+        </div>
+    </form>
+@endsection
+
+@section('footer')
+    Don't have an account yet?
+    <a href="{{ route('auth.register', $invitationToken ? ['invitation' => $invitationToken] : []) }}">
+        Sign up
+    </a>
+    — free, no card required.
+@endsection

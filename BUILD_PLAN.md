@@ -244,14 +244,81 @@ derived artifacts.
 | **5 — Backup module** | spatie/laravel-backup + admin UI + schedule + failure mail | **done** 2026-07-19 |
 | **6 — Polish/QA** | Live smoke, cache-poisoning fix, README + deploy samples, 47 feature tests, QA log in PM | **done** 2026-07-19 (live-LLM smoke pending an API key) |
 
+### Phase 7 — SaaS conversion (2026-07-30)
+
+Converted from a single-tenant internal tool into a multi-tenant SaaS. Decisions taken
+with Ryan at the start of the phase:
+
+| Question | Decision |
+|---|---|
+| What owns a subscription? | **Organisation workspaces** — a user may belong to several; the subscription and quota sit on the workspace. Retro-fitting tenancy later is painful, and it is what B2B minutes buyers expect. |
+| What do tiers meter on? | **Generations per month**, plus a seat limit and feature flags per tier. Maps directly to LLM cost and is easy for a customer to predict. |
+| How do people get in? | **Permanent free tier, no card** (3 generations/month). Registration therefore works with Paystack unconfigured. |
+
+| Epic | Delivered |
+|---|---|
+| **A — UI + assets** | Tabler 1.4.0 vendored into `public/vendor` with SweetAlert2, Tom Select, ApexCharts, IntroJS and self-hosted Inter. **Every CDN link removed; Vite and Tailwind deleted entirely** — no bundler, no Node on the deploy target. Light-default / deep-dark theme pair, resolved server-side so there is no flash of the wrong theme. New app / guest / marketing / admin shells. |
+| **B — Public face + auth** | `Site` module: landing, how-it-works, pricing (rendered from the plans table), terms, privacy. Registration, login, password reset, email verification, profile. Honeypot + per-endpoint rate limiting. |
+| **C — Tenancy** | `Tenancy` module: organisations, membership roles (owner/admin/member), invitations with hashed tokens, org switcher, seat limits. `OrganisationScope` throws rather than falling back to unfiltered results. `BindOrganisation` job middleware so a long-lived worker cannot inherit the previous job's tenant. |
+| **D — Billing** | `Billing` module: plans, Paystack gateway behind a `PaymentGateway` interface, checkout with server-side verification, HMAC-verified idempotent webhooks, subscription lifecycle with grace period, generation metering enforced in the service layer. |
+| **E — Back office** | `Admin` module: separate `admins` table, `admin` guard, `/admin/login`, own password broker. Workspaces, users, plans, payments, subscriptions, webhook replay, append-only audit log, audited impersonation. The LLM and Backup screens moved here off the legacy `users.role` gate, which was then dropped. |
+| **G — Workspace search** | New `Search` module: a maintained `search_documents` index over transcripts, minutes sections, decisions and action items, with PostgreSQL full-text search (generated `tsvector`, GIN + trigram indexes) and a LIKE fallback for SQLite. Navbar search box with a 1.5 s debounce that resets on each keystroke, results grouped by meeting, plus a filterable full-results page and `php artisan search:reindex`. Navbar re-laid out: search left, identity pinned right. |
+| **F — Sweep + docs** | Every method given parameter and return types; decorative banner comments replaced with docblocks that explain intent; dead legacy admin code removed. New docs: `SAAS_ARCHITECTURE.md`, `BILLING.md`, `ADMIN.md`, `THEMING.md`, `VENDOR_ASSETS.md`. |
+
+Two real bugs were found and fixed by the test pass, both of which would have hit
+production:
+
+1. **Route-model binding ran before the tenant was bound.** Laravel prioritises
+   `SubstituteBindings` after `auth`, but middleware not in that priority list keeps its
+   declared position — which put `organisation` *after* binding. Every
+   `/app/minutes/{meeting}` request would have resolved a tenant-owned model with no
+   organisation bound, and the scope would have thrown. Fixed by inserting
+   `EnsureOrganisation`, `EnsureOrganisationRole` and `AuthenticateAdmin` into the
+   priority list before `SubstituteBindings` (`bootstrap/app.php`).
+2. **The dashboard and profile routes were behind `auth` only, not `organisation`.** Both
+   render the full app shell, so the sidebar, workspace switcher and usage meter all
+   rendered blank on the app's own landing page.
+
+A third, smaller one: `AdminUser::is_active` relied on the database default, so a
+freshly created in-memory instance had it as `null` and `canAuthenticate()` read that as
+"not active". Now defaulted on the model — a security-relevant boolean must never be
+null anywhere.
+
+Verified end to end against a running app: 30 pages returning 200 across public,
+customer and back-office surfaces; registration creating a workspace, owner membership
+and a free subscription; the verification gate blocking a first generation; seat limits
+biting on the free plan; guard separation in both directions; and cross-workspace reads
+blocked by primary key.
+
+Still open at the end of the phase:
+
+1. **Live Paystack smoke test** — the whole flow is built and unit-verified, but no
+   real transaction has been put through. Needs test keys.
+2. **Legal review** — `terms.blade.php` and `privacy.blade.php` are accurate about what
+   the code does, but have not been reviewed by a lawyer, and POPIA requires a named
+   Information Officer (`config('site.contact_email')` is a placeholder).
+3. **Scheduled erasure of deleted accounts** — the privacy policy commits to erasure
+   after `SITE_DATA_RETENTION_DAYS`; there is no job doing it yet. The wording says
+   "will be retained… then erased" rather than implying an automated process.
+4. **Feature test coverage is partial.** 69 tests pass, including a dedicated
+   `TenancyIsolationTest` (cross-workspace reads, stale pointers, role gates) and
+   `SearchTest`. Billing has no phpunit coverage yet — the Paystack gateway, webhook
+   idempotency and quota rollover are verified by reading and by live probes, not by
+   tests. That is the largest remaining gap.
+5. **Search results are keyboard-navigable only one level deep** — Down-arrow enters the
+   list, but arrow-cycling between results is not implemented.
+
 Deferred (post-v1, in rough priority order): audio transcription
 (Whisper API or local), OCR for scanned PDFs, email-in ingestion,
 action-item push to the Ceratine PM, multi-tenancy/teams, 2FA.
 
 ## 11. Assumptions (proceeding on these unless overridden)
 
-1. **Multi-user, single-tenant** — one org's users share a library;
-   roles are just admin/user. Multi-tenant is a v2 concern.
+1. ~~**Multi-user, single-tenant** — one org's users share a library;
+   roles are just admin/user. Multi-tenant is a v2 concern.~~
+   **Superseded 2026-07-30 (Phase 7):** now multi-tenant with organisation
+   workspaces, per-workspace roles (owner/admin/member), and a separate back-office
+   guard. See `docs/SAAS_ARCHITECTURE.md`.
 2. **Audio is out of scope for v1** — the spec mentions recordings, but
    transcription is a separate pipeline; text inputs cover the core.
 3. **Deploy target** matches Ryan's other apps (VPS, nginx + php-fpm +
@@ -262,7 +329,8 @@ action-item push to the Ceratine PM, multi-tenancy/teams, 2FA.
 ## 12. Open questions for Ryan
 
 1. Who is the "someone" asking for this — billable client work? Affects
-   PM customer, priority, and whether multi-tenancy moves up.
+   PM customer and priority. **Multi-tenancy is no longer waiting on this** — it
+   shipped in Phase 7.
 2. Is audio-in genuinely needed for v1, or is text-only acceptable to
    ship first?
 3. ~~nwidart modules or a port of the Ceratine bespoke module structure?~~

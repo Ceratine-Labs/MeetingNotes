@@ -9,13 +9,19 @@ use Modules\Auth\Models\User;
 use Modules\Minutes\Jobs\RegenerateSectionJob;
 use Modules\Minutes\Models\Meeting;
 use Modules\Minutes\Services\MinutesGenerator;
+use Modules\Tenancy\Models\Organisation;
+use Tests\Concerns\CreatesTenants;
 use Tests\TestCase;
 
 class SectionEditTest extends TestCase
 {
     use RefreshDatabase;
+    use CreatesTenants;
 
     protected User $user;
+
+    /** The workspace the edited meetings belong to. */
+    protected Organisation $workspace;
 
     protected function setUp(): void
     {
@@ -25,9 +31,7 @@ class SectionEditTest extends TestCase
         setting_service()->set('llm.anthropic.api_key', 'sk-test', 'llm', encrypt: true);
         app(\Modules\Llm\Database\Seeders\PromptTemplateSeeder::class)->run();
 
-        $this->user = User::query()->create([
-            'name' => 'U', 'email' => 'u@test.local', 'password' => 'x', 'role' => User::ROLE_USER,
-        ]);
+        [$this->user, $this->workspace] = $this->tenantUser();
     }
 
     protected function readyMeeting(): Meeting
@@ -42,15 +46,18 @@ class SectionEditTest extends TestCase
             'supporting_materials' => [],
             'general_discussion' => [],
             'next_steps' => [],
-            'quality_notes' => '',
+            'quality_notes' => ''
         ];
 
         $meeting = Meeting::query()->create([
+            // Without this the row belongs to no workspace and the
+            // organisation scope hides it from the acting user.
+            'organisation_id' => $this->workspace->getKey(),
             'user_id' => $this->user->id,
             'source_type' => 'paste',
             'status' => Meeting::STATUS_READY,
             'sections' => $sections,
-            'rendered_html' => app(\Modules\Minutes\Services\MinutesRenderer::class)->render($sections),
+            'rendered_html' => app(\Modules\Minutes\Services\MinutesRenderer::class)->render($sections)
         ]);
         $meeting->transcript()->create(['raw_text' => 'Sarah: original transcript…']);
         $meeting->decisions()->create(['ref' => 'D1', 'decision' => 'Original decision', 'sort' => 0]);
@@ -65,12 +72,12 @@ class SectionEditTest extends TestCase
 
         $newActions = [
             ['ref' => 'A1', 'description' => 'Edited action', 'owner' => 'Bob', 'priority' => 'high'],
-            ['ref' => 'A2', 'description' => 'Added action', 'owner' => 'Sarah', 'priority' => 'medium'],
+            ['ref' => 'A2', 'description' => 'Added action', 'owner' => 'Sarah', 'priority' => 'medium']
         ];
 
         $this->actingAs($this->user)
             ->putJson("/app/minutes/{$meeting->id}/sections/action_items", [
-                'value' => json_encode($newActions),
+                'value' => json_encode($newActions)
             ])
             ->assertOk()
             ->assertJson(['ok' => true]);
@@ -88,7 +95,7 @@ class SectionEditTest extends TestCase
 
         $this->actingAs($this->user)
             ->putJson("/app/minutes/{$meeting->id}/sections/action_items", [
-                'value' => json_encode([['description' => 'missing ref and owner']]),
+                'value' => json_encode([['description' => 'missing ref and owner']])
             ])
             ->assertStatus(422);
 
@@ -130,13 +137,13 @@ class SectionEditTest extends TestCase
             'api.anthropic.com/*' => Http::response([
                 'model' => 'claude-sonnet-4-6',
                 'content' => [['type' => 'tool_use', 'name' => 'emit_result', 'input' => [
-                    'decisions' => [['ref' => 'D1', 'decision' => 'Regenerated decision', 'made_by' => 'Sarah']],
+                    'decisions' => [['ref' => 'D1', 'decision' => 'Regenerated decision', 'made_by' => 'Sarah']]
                 ]]],
-                'usage' => ['input_tokens' => 100, 'output_tokens' => 50],
-            ]),
+                'usage' => ['input_tokens' => 100, 'output_tokens' => 50]
+            ])
         ]);
 
-        (new RegenerateSectionJob($meeting->id, 'decisions'))->handle(app(MinutesGenerator::class));
+        (new RegenerateSectionJob($meeting->id, 'decisions', $this->workspace->getKey()))->handle(app(MinutesGenerator::class));
 
         $meeting->refresh();
         $this->assertNull($meeting->regen_section);
@@ -152,7 +159,7 @@ class SectionEditTest extends TestCase
         $meeting = $this->readyMeeting();
         $meeting->update(['section_proposal' => [
             'section' => 'decisions',
-            'value' => [['ref' => 'D1', 'decision' => 'Accepted decision', 'made_by' => 'Sarah']],
+            'value' => [['ref' => 'D1', 'decision' => 'Accepted decision', 'made_by' => 'Sarah']]
         ]]);
 
         $this->actingAs($this->user)
@@ -170,7 +177,7 @@ class SectionEditTest extends TestCase
         $meeting = $this->readyMeeting();
         $meeting->update(['section_proposal' => [
             'section' => 'decisions',
-            'value' => [['ref' => 'D1', 'decision' => 'Should never apply']],
+            'value' => [['ref' => 'D1', 'decision' => 'Should never apply']]
         ]]);
 
         $this->actingAs($this->user)
@@ -187,7 +194,7 @@ class SectionEditTest extends TestCase
         $meeting = $this->readyMeeting();
         $meeting->update(['section_proposal' => [
             'section' => 'decisions',
-            'value' => [['ref' => 'D1', 'decision' => 'Proposed decision']],
+            'value' => [['ref' => 'D1', 'decision' => 'Proposed decision']]
         ]]);
 
         $response = $this->actingAs($this->user)

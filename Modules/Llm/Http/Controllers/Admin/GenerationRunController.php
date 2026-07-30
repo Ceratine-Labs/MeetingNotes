@@ -3,11 +3,15 @@
 namespace Modules\Llm\Http\Controllers\Admin;
 
 use Illuminate\Routing\Controller;
+use Illuminate\View\View;
 use Modules\Llm\Models\GenerationRun;
 
 class GenerationRunController extends Controller
 {
-    public function index()
+    /**
+     * Every LLM call the application has made, with cost and token totals.
+     */
+    public function index(): View
     {
         $runs = GenerationRun::query()
             ->orderByDesc('created_at')

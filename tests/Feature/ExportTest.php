@@ -7,21 +7,27 @@ use Modules\Auth\Models\User;
 use Modules\Minutes\Models\Meeting;
 use Modules\Minutes\Services\MinutesExporter;
 use Modules\Minutes\Services\MinutesRenderer;
+use Modules\Tenancy\Models\Organisation;
+use Tests\Concerns\CreatesTenants;
 use Tests\TestCase;
 
 class ExportTest extends TestCase
 {
     use RefreshDatabase;
+    use CreatesTenants;
 
     protected User $user;
+
+    /** The workspace the exported meetings belong to. */
+    protected Organisation $workspace;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->user = User::query()->create([
-            'name' => 'U', 'email' => 'u@test.local', 'password' => 'x', 'role' => User::ROLE_USER,
-        ]);
+        // The unlimited test plan grants md/docx/pdf, so export assertions are not
+        // affected by the free plan's markdown-only entitlement.
+        [$this->user, $this->workspace] = $this->tenantUser();
     }
 
     protected function readyMeeting(): Meeting
@@ -30,42 +36,45 @@ class ExportTest extends TestCase
             'meeting_info' => [
                 'title' => 'Q3 Planning Sync', 'date' => '2026-07-15', 'start_time' => '09:00',
                 'end_time' => '10:30', 'duration' => '90 minutes', 'location' => 'Zoom',
-                'meeting_type' => 'strategic', 'objective' => 'Agree Q3 priorities', 'chair' => 'Sarah Chen',
+                'meeting_type' => 'strategic', 'objective' => 'Agree Q3 priorities', 'chair' => 'Sarah Chen'
             ],
             'attendance' => [
                 'present' => [['name' => 'Sarah Chen', 'title' => 'CTO', 'organization' => 'Acme']],
                 'absent' => [['name' => 'Bob Marsh', 'reason' => 'annual leave']],
-                'guests' => [],
+                'guests' => []
             ],
             'discussion' => [[
                 'heading' => 'Budget review',
                 'summary' => "The team reviewed Q2 spend.\n\nSpend was 12% under budget.",
-                'key_points' => [['point' => 'Cloud costs fell 8%', 'raised_by' => 'Sarah Chen']],
+                'key_points' => [['point' => 'Cloud costs fell 8%', 'raised_by' => 'Sarah Chen']]
             ]],
             'decisions' => [[
                 'ref' => 'D1', 'decision' => 'Reallocate savings', 'made_by' => 'Sarah Chen',
-                'rationale' => 'Top OKR', 'conditions' => 'CFO sign-off', 'impact' => 'Earlier delivery',
+                'rationale' => 'Top OKR', 'conditions' => 'CFO sign-off', 'impact' => 'Earlier delivery'
             ]],
             'action_items' => [[
                 'ref' => 'A1', 'description' => 'Prepare memo | with pipe', 'owner' => 'Sarah Chen',
                 'due_date' => '2026-07-22', 'success_criteria' => 'Approved', 'priority' => 'high',
-                'collaborators' => ['Finance'],
+                'collaborators' => ['Finance']
             ]],
             'parking_lot' => [['item' => 'Office move', 'type' => 'tabled', 'reason' => 'out of scope']],
             'supporting_materials' => [['title' => 'Q2 report', 'type' => 'spreadsheet']],
             'general_discussion' => [['topic' => 'Hiring', 'note' => 'Two offers out']],
             'next_steps' => ['next_meeting' => '2026-07-29', 'checkpoints' => ['Memo review'], 'communication_plan' => '#leadership', 'monitor' => ['Cloud costs']],
-            'quality_notes' => '',
+            'quality_notes' => ''
         ];
 
         $meeting = Meeting::query()->create([
+            // Without this the row belongs to no workspace and the
+            // organisation scope hides it from the acting user.
+            'organisation_id' => $this->workspace->getKey(),
             'user_id' => $this->user->id,
             'title' => 'Q3 Planning Sync',
             'meeting_date' => '2026-07-15',
             'source_type' => 'paste',
             'status' => Meeting::STATUS_READY,
             'sections' => $sections,
-            'rendered_html' => app(MinutesRenderer::class)->render($sections),
+            'rendered_html' => app(MinutesRenderer::class)->render($sections)
         ]);
         $meeting->transcript()->create(['raw_text' => 'src']);
 
@@ -122,9 +131,12 @@ class ExportTest extends TestCase
     public function test_export_blocked_for_unready_minutes_and_unknown_format(): void
     {
         $processing = Meeting::query()->create([
+            // Without this the row belongs to no workspace and the
+            // organisation scope hides it from the acting user.
+            'organisation_id' => $this->workspace->getKey(),
             'user_id' => $this->user->id,
             'source_type' => 'paste',
-            'status' => Meeting::STATUS_PROCESSING,
+            'status' => Meeting::STATUS_PROCESSING
         ]);
 
         $this->actingAs($this->user)->get("/app/minutes/{$processing->id}/export/pdf")->assertStatus(422);
