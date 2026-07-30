@@ -1,6 +1,6 @@
 @extends('core::layouts.guest')
 
-@section('title', 'Log in — ' . config('app.name'))
+@section('title', 'Log in: ' . config('app.name'))
 @section('heading', 'Log in to your account')
 
 @section('content')
@@ -57,5 +57,5 @@
     <a href="{{ route('auth.register', $invitationToken ? ['invitation' => $invitationToken] : []) }}">
         Sign up
     </a>
-    — free, no card required.
+    (free, no card required).
 @endsection

@@ -31,10 +31,11 @@
     $exports = is_array($exports) ? $exports : [];
 @endphp
 
-<div class="card h-100 {{ $recommended ? 'mn-plan-featured' : '' }}">
+<div class="card h-100 mn-lift {{ $recommended ? 'mn-plan-featured' : '' }}">
     @if ($recommended)
+        {{-- ti-star, not ti-star-filled: the vendored icon set has no filled variant. --}}
         <div class="ribbon ribbon-top bg-primary">
-            <i class="ti ti-star-filled"></i>
+            <i class="ti ti-star"></i>
         </div>
     @endif
 
@@ -71,8 +72,10 @@
                     <strong>
                         {{ $plan->hasUnlimitedGenerations() ? 'Unlimited' : $plan->generation_quota }}
                     </strong>
-                    {{ $plan->hasUnlimitedGenerations() ? 'sets of minutes' : Str::plural('set of minutes', $plan->generation_quota) }}
-                    a month
+                    {{-- Pluralise "set", not the phrase: Str::plural only inflects
+                         the last word, and "minutes" is already plural. --}}
+                    {{ $plan->hasUnlimitedGenerations() ? 'sets' : Str::plural('set', $plan->generation_quota) }}
+                    of minutes a month
                 </span>
             </li>
 

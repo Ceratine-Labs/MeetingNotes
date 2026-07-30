@@ -24,7 +24,9 @@
 </head>
 <body class="d-flex flex-column">
     <div class="page">
-        <header class="navbar navbar-expand-md sticky-top border-bottom">
+        {{-- data-mn-nav-shadow: app.js drops a shadow under this once the
+             page scrolls, so the sticky bar separates from the hero. --}}
+        <header class="navbar navbar-expand-md sticky-top border-bottom mn-site-nav" data-mn-nav-shadow>
             <div class="container-xl">
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                         data-bs-target="#site-nav" aria-label="Toggle navigation">

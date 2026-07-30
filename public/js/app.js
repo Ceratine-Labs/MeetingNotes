@@ -64,6 +64,13 @@
         document.documentElement.setAttribute('data-bs-theme', theme);
         setCookie(THEME_COOKIE, theme, 365);
 
+        // Follow along with the browser/PWA titlebar colour. The values mirror
+        // what head.blade.php renders server-side for each theme.
+        const themeColor = document.querySelector('meta[name="theme-color"]');
+        if (themeColor) {
+            themeColor.setAttribute('content', theme === 'dark' ? '#04060a' : '#ffffff');
+        }
+
         // Keep every toggle on the page (navbar + user menu) visually in sync.
         document.querySelectorAll('[data-mn-theme-toggle]').forEach(function (el) {
             el.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
@@ -510,6 +517,185 @@
     }
 
     /* ------------------------------------------------------------------ *
+     * Marketing motion
+     *
+     * Scroll reveals, count-up numbers, the hero demo loop and the navbar
+     * scroll shadow. All of it is decoration layered onto a page that is
+     * complete without it: the CSS hides nothing until this code stamps
+     * `mn-anim` on <html>, and a reduced-motion preference disables the
+     * whole module. Elements are found by data attribute, so pages without
+     * them (the entire app shell) pay one querySelectorAll and nothing else.
+     * ------------------------------------------------------------------ */
+
+    const reducedMotion =
+        window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /**
+     * Fade-and-rise elements the first time they enter the viewport.
+     * Falls back to showing everything when IntersectionObserver is missing.
+     */
+    function initReveals() {
+        const targets = document.querySelectorAll('.mn-reveal');
+        if (!targets.length) {
+            return;
+        }
+
+        // Only now may the CSS hide reveal targets; without this class the
+        // page stays fully visible for no-JS visitors.
+        document.documentElement.classList.add('mn-anim');
+
+        if (!('IntersectionObserver' in window)) {
+            targets.forEach(function (el) {
+                el.classList.add('mn-in');
+            });
+            return;
+        }
+
+        const observer = new IntersectionObserver(
+            function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('mn-in');
+                        observer.unobserve(entry.target); // Reveal once, never re-hide.
+                    }
+                });
+            },
+            { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+        );
+
+        targets.forEach(function (el) {
+            observer.observe(el);
+        });
+    }
+
+    /**
+     * Count [data-mn-count] elements up from zero when they first appear.
+     * The final value is server-rendered in the markup, so a visitor with
+     * reduced motion (or no observer support) simply sees it immediately.
+     */
+    function initCounters() {
+        const counters = document.querySelectorAll('[data-mn-count]');
+        if (!counters.length || reducedMotion || !('IntersectionObserver' in window)) {
+            return;
+        }
+
+        function count(el) {
+            const target = parseInt(el.dataset.mnCount, 10);
+            if (isNaN(target)) {
+                return;
+            }
+
+            const started = performance.now();
+            const duration = 900;
+
+            function tick(now) {
+                const progress = Math.min((now - started) / duration, 1);
+                // Ease-out so the number lands softly instead of snapping.
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = Math.round(target * eased);
+
+                if (progress < 1) {
+                    requestAnimationFrame(tick);
+                }
+            }
+
+            requestAnimationFrame(tick);
+        }
+
+        const observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    observer.unobserve(entry.target);
+                    count(entry.target);
+                }
+            });
+        }, { threshold: 0.6 });
+
+        counters.forEach(function (el) {
+            observer.observe(el);
+        });
+    }
+
+    /**
+     * The landing hero demo: cycle data-phase 1 → 2 → 3 and let the CSS do
+     * the acting. The markup ships with data-phase="3" so the finished
+     * minutes are what a no-JS, no-observer or reduced-motion visitor sees.
+     * The loop starts on first sight of the card and then free-runs; each
+     * phase change re-triggers the CSS animations for that pane.
+     */
+    function initHeroDemo() {
+        const demo = document.querySelector('[data-mn-demo]');
+        if (!demo || reducedMotion || !('IntersectionObserver' in window)) {
+            return;
+        }
+
+        // Phase number and how long it holds the stage, in ms. Phase 1 covers
+        // six transcript lines at 450ms stagger; phase 2 nine section ticks at
+        // 380ms; phase 3 holds the finished document long enough to read.
+        const schedule = [
+            [1, 4200],
+            [2, 4600],
+            [3, 7500],
+        ];
+
+        let index = 0;
+
+        function advance() {
+            demo.setAttribute('data-phase', String(schedule[index][0]));
+            setTimeout(function () {
+                index = (index + 1) % schedule.length;
+                advance();
+            }, schedule[index][1]);
+        }
+
+        const observer = new IntersectionObserver(function (entries) {
+            if (entries.some(function (entry) { return entry.isIntersecting; })) {
+                observer.disconnect();
+                advance();
+            }
+        }, { threshold: 0.3 });
+
+        observer.observe(demo);
+    }
+
+    /**
+     * Give the sticky marketing navbar a shadow once the page has scrolled,
+     * so it separates visually from the hero it starts flush against.
+     */
+    function initNavShadow() {
+        const nav = document.querySelector('[data-mn-nav-shadow]');
+        if (!nav) {
+            return;
+        }
+
+        function update() {
+            nav.classList.toggle('mn-nav-scrolled', window.scrollY > 8);
+        }
+
+        update();
+        window.addEventListener('scroll', update, { passive: true });
+    }
+
+    /* ------------------------------------------------------------------ *
+     * Service worker (PWA)
+     *
+     * public/sw.js only caches versioned static assets and provides the
+     * offline fallback page; it never caches HTML. Registration failure is
+     * silently ignored: the app is fully functional without it.
+     * ------------------------------------------------------------------ */
+
+    function initServiceWorker() {
+        // isSecureContext covers localhost too, so this works in dev.
+        if (!('serviceWorker' in navigator) || !window.isSecureContext) {
+            return;
+        }
+
+        navigator.serviceWorker.register('/sw.js').catch(function () {
+            // Non-fatal: an old browser or a blocked registration changes nothing.
+        });
+    }
+
+    /* ------------------------------------------------------------------ *
      * Boot
      * ------------------------------------------------------------------ */
 
@@ -517,6 +703,11 @@
         initTomSelect();
         renderToasts();
         initAllSearch();
+        initReveals();
+        initCounters();
+        initHeroDemo();
+        initNavShadow();
+        initServiceWorker();
     });
 
     // Expose the pieces that dynamically-rendered pages need to re-run.

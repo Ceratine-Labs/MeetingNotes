@@ -1,6 +1,6 @@
 @extends('core::layouts.guest')
 
-@section('title', 'Join ' . $organisation->name . ' — ' . config('app.name'))
+@section('title', 'Join ' . $organisation->name . ': ' . config('app.name'))
 @section('heading', 'You have been invited')
 
 @section('content')

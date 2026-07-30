@@ -16,7 +16,7 @@
 <meta name="color-scheme" content="{{ $theme === 'dark' ? 'dark light' : 'light dark' }}">
 
 <title>@yield('title', config('app.name', 'MeetingNotes'))</title>
-<meta name="description" content="@yield('meta_description', 'Turn a meeting transcript into complete, professional minutes — decisions, action items, attendance and next steps, in the same structure every time.')">
+<meta name="description" content="@yield('meta_description', 'Turn a meeting transcript into complete, professional minutes: decisions, action items, attendance and next steps, in the same structure every time.')">
 
 {{-- Public pages are indexable; anything behind auth is not. --}}
 @hasSection('robots')
@@ -26,6 +26,18 @@
 @endif
 
 <link rel="icon" href="{{ mn_asset('favicon.ico') }}" sizes="any">
+
+{{--
+    PWA: installable on desktop and mobile. The manifest is a route, not a
+    static file, so its name follows config('app.name'). The service worker
+    (public/sw.js) is registered by app.js; theme-color is kept in sync with
+    the live theme by the toggle so the installed titlebar follows along.
+--}}
+<link rel="manifest" href="{{ route('site.manifest') }}">
+<meta name="theme-color" content="{{ $theme === 'dark' ? '#04060a' : '#ffffff' }}">
+<link rel="apple-touch-icon" href="{{ mn_asset('icons/apple-touch-icon.png') }}">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'MeetingNotes') }}">
 
 {{--
     Fonts first: Inter is what makes Tabler look like Tabler, and preloading

@@ -1,6 +1,6 @@
 @extends('core::layouts.marketing')
 
-@section('title', 'Privacy policy — ' . config('app.name'))
+@section('title', 'Privacy policy: ' . config('app.name'))
 @section('meta_description', 'How ' . config('app.name') . ' handles your meeting transcripts and personal information.')
 @section('robots', 'index, follow')
 
@@ -60,23 +60,23 @@
 
                     <h3>Information you give us</h3>
                     <ul>
-                        <li><strong>Account details</strong> — your name, email address and a hashed
+                        <li><strong>Account details:</strong> your name, email address and a hashed
                             password. We never store your password itself.</li>
-                        <li><strong>Workspace details</strong> — the workspace name and timezone, and
+                        <li><strong>Workspace details:</strong> the workspace name and timezone, and
                             the email addresses of people you invite.</li>
-                        <li><strong>Meeting material</strong> — the transcripts, notes and documents you
+                        <li><strong>Meeting material:</strong> the transcripts, notes and documents you
                             upload, and the minutes generated from them. This is the sensitive part, and
                             it is covered specifically in section 4.</li>
                     </ul>
 
                     <h3>Information we generate</h3>
                     <ul>
-                        <li><strong>Usage records</strong> — when a set of minutes was generated, by
+                        <li><strong>Usage records:</strong> when a set of minutes was generated, by
                             whom, which model was used and roughly how much text it processed. We need
                             this to meter your plan allowance and to understand our own costs.</li>
-                        <li><strong>Sign-in records</strong> — the time and IP address of your last
+                        <li><strong>Sign-in records:</strong> the time and IP address of your last
                             sign-in, kept for account security and abuse investigation.</li>
-                        <li><strong>Technical logs</strong> — ordinary server and error logs.</li>
+                        <li><strong>Technical logs:</strong> ordinary server and error logs.</li>
                     </ul>
 
                     <h3>Payment information</h3>
@@ -84,20 +84,20 @@
                         Card payments are handled by Paystack. <strong>Your card details are entered on
                         Paystack's own page and never reach our servers.</strong> We keep a record of
                         each payment: the amount, the date, the outcome, the card brand and its last four
-                        digits — enough to answer a billing question, and nothing more.
+                        digits: enough to answer a billing question, and nothing more.
                     </p>
 
                     <h2>3. Why we hold it, and on what basis</h2>
                     <ul>
-                        <li><strong>To provide the service</strong> — generating, storing and exporting
+                        <li><strong>To provide the service:</strong> generating, storing and exporting
                             your minutes. This is the performance of our contract with you.</li>
-                        <li><strong>To bill you and meter your allowance</strong> — also contractual.</li>
-                        <li><strong>To keep accounts secure and prevent abuse</strong> — our legitimate
+                        <li><strong>To bill you and meter your allowance:</strong> also contractual.</li>
+                        <li><strong>To keep accounts secure and prevent abuse:</strong> our legitimate
                             interest, and yours.</li>
-                        <li><strong>To contact you about your account</strong> — verification emails,
+                        <li><strong>To contact you about your account:</strong> verification emails,
                             password resets, invitations and billing notices. These are service messages,
                             not marketing.</li>
-                        <li><strong>To meet legal obligations</strong> — tax and accounting records, for
+                        <li><strong>To meet legal obligations:</strong> tax and accounting records, for
                             example.</li>
                     </ul>
                     <p>
@@ -117,7 +117,7 @@
                             just in the interface.
                         </li>
                         <li>
-                            <strong>Your material is not used to train any model</strong> — ours or
+                            <strong>Your material is not used to train any model</strong>, ours or
                             anyone else's.
                         </li>
                         <li>
@@ -130,7 +130,7 @@
                         </li>
                         <li>
                             Because transcripts may contain other people's personal information, you are
-                            responsible for having the right to upload them — including any recording
+                            responsible for having the right to upload them, including any recording
                             consent your jurisdiction requires.
                         </li>
                     </ul>
@@ -143,15 +143,15 @@
                     <ul>
                         <li>
                             <strong>Language model provider</strong> (Anthropic, or another provider
-                            configured by the administrator) — receives your meeting text in order to
+                            configured by the administrator): receives your meeting text in order to
                             generate minutes. It is not used for training.
                         </li>
                         <li>
-                            <strong>Paystack</strong> — payment processing. Receives your email address
+                            <strong>Paystack:</strong> payment processing. Receives your email address
                             and payment details; receives no meeting content.
                         </li>
                         <li>
-                            <strong>Hosting and email providers</strong> — the servers the application
+                            <strong>Hosting and email providers:</strong> the servers the application
                             runs on and the service that delivers our transactional email.
                         </li>
                     </ul>
@@ -161,34 +161,34 @@
 
                     <h2>6. Where it is stored</h2>
                     <p>
-                        Your data is stored on our servers and backed up regularly. Some of our providers
-                        — the language model provider in particular — process data outside
+                        Your data is stored on our servers and backed up regularly. Some of our providers, the
+                        language model provider in particular, process data outside
                         {{ config('site.company_country') }}. Where that happens we rely on the provider's
                         contractual data-protection commitments.
                     </p>
 
                     <h2>7. How long we keep it</h2>
                     <ul>
-                        <li><strong>While your account is open</strong> — your meeting material stays
+                        <li><strong>While your account is open:</strong> your meeting material stays
                             available until you delete it.</li>
-                        <li><strong>After you delete your account</strong> — your data will be retained
+                        <li><strong>After you delete your account:</strong> your data will be retained
                             for {{ config('site.data_retention_days') }} days in case you ask us to
                             restore it, and then permanently erased. Contact us if you need it erased
                             sooner.</li>
-                        <li><strong>Payment and tax records</strong> — kept for as long as the law
+                        <li><strong>Payment and tax records:</strong> kept for as long as the law
                             requires, which is longer than the period above.</li>
-                        <li><strong>Backups</strong> — deleted data persists in backups until those
+                        <li><strong>Backups:</strong> deleted data persists in backups until those
                             backups age out on their normal rotation.</li>
                     </ul>
 
                     <h2>8. Your rights</h2>
-                    <p>Under POPIA — and comparable law elsewhere — you may:</p>
+                    <p>Under POPIA, and comparable law elsewhere, you may:</p>
                     <ul>
                         <li>ask what personal information we hold about you;</li>
-                        <li>have inaccurate information corrected — you can edit your own profile
+                        <li>have inaccurate information corrected; you can edit your own profile
                             directly;</li>
                         <li>ask us to delete your information;</li>
-                        <li>get a copy of your content — export is available on every plan, including
+                        <li>get a copy of your content; export is available on every plan, including
                             free, and we deliberately never restrict Markdown export;</li>
                         <li>object to particular processing;</li>
                         <li>complain to the Information Regulator of South Africa.</li>

@@ -2,6 +2,7 @@
 
 namespace Modules\Site\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use Modules\Billing\Models\Plan;
@@ -57,6 +58,36 @@ class SiteController extends Controller
         return view('site::pricing', [
             'plans' => Plan::query()->public()->get(),
         ]);
+    }
+
+    /**
+     * PWA web app manifest.
+     *
+     * Served from a route rather than a static public/ file so the name and
+     * description follow config('app.name') and can never drift from the
+     * brand. Lives at the root (this module owns the unprefixed routes) so
+     * its scope covers both the marketing pages and the /app shell.
+     *
+     * start_url points at the dashboard: the people who install the app are
+     * users, and a signed-out launch simply lands on the login redirect.
+     */
+    public function manifest(): JsonResponse
+    {
+        return response()->json([
+            'name' => config('app.name'),
+            'short_name' => config('app.name'),
+            'description' => 'Professional meeting minutes, generated from your transcript.',
+            'start_url' => '/app/dashboard',
+            'scope' => '/',
+            'display' => 'standalone',
+            'background_color' => '#f4f6fa',
+            'theme_color' => '#066fd1',
+            'icons' => [
+                ['src' => '/icons/icon-192.png', 'sizes' => '192x192', 'type' => 'image/png'],
+                ['src' => '/icons/icon-512.png', 'sizes' => '512x512', 'type' => 'image/png'],
+                ['src' => '/icons/icon-maskable-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+            ],
+        ], 200, ['Content-Type' => 'application/manifest+json']);
     }
 
     /**
