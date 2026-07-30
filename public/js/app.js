@@ -677,6 +677,36 @@
     }
 
     /* ------------------------------------------------------------------ *
+     * Expandable table rows (mobile)
+     *
+     * Resource tables show only their most pertinent columns on small
+     * screens (the rest carry `d-none d-md-table-cell`); the remaining data
+     * lives in a `.mn-row-detail` row directly after the main row, opened by
+     * a chevron button carrying [data-mn-row-toggle]. Delegated from
+     * `document`, like everything else in this file, so re-rendered markup
+     * needs no re-init. The chevron itself is rotated by CSS off
+     * aria-expanded — see theme.css.
+     * ------------------------------------------------------------------ */
+
+    document.addEventListener('click', function (event) {
+        const toggle = event.target.closest('[data-mn-row-toggle]');
+        if (!toggle) {
+            return;
+        }
+
+        const row = toggle.closest('tr');
+        const detail = row ? row.nextElementSibling : null;
+
+        if (!detail || !detail.classList.contains('mn-row-detail')) {
+            return;
+        }
+
+        const opening = detail.hidden;
+        detail.hidden = !opening;
+        toggle.setAttribute('aria-expanded', opening ? 'true' : 'false');
+    });
+
+    /* ------------------------------------------------------------------ *
      * Service worker (PWA)
      *
      * public/sw.js only caches versioned static assets and provides the

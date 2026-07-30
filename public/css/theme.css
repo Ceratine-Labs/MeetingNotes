@@ -626,6 +626,56 @@ html.mn-anim .mn-reveal.mn-in {
 }
 
 /* ==========================================================================
+   Expandable table rows (mobile)
+
+   Resource tables collapse to their pertinent columns on phones; the rest
+   moves into a .mn-row-detail row toggled by a [data-mn-row-toggle] chevron
+   (wired in app.js). Detail rows also carry d-md-none, so desktop never
+   sees them regardless of toggle state.
+   ========================================================================== */
+
+.mn-row-toggle .ti {
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+
+/* Closed points down (at where the content will appear); open points up. */
+.mn-row-toggle[aria-expanded='true'] .ti {
+    transform: rotate(180deg);
+}
+
+.mn-row-detail > td {
+    background: var(--tblr-bg-surface-secondary);
+}
+
+/* Label/value pairs inside the detail row. */
+.mn-row-detail-list {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.25rem 1rem;
+    margin: 0;
+}
+
+.mn-row-detail-list dt {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--tblr-secondary-color);
+    align-self: center;
+}
+
+.mn-row-detail-list dd {
+    margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mn-row-toggle .ti {
+        transition: none;
+    }
+}
+
+/* ==========================================================================
    Third-party widget theming
 
    SweetAlert2 and Tom Select both ship their own colour decisions. Bind them

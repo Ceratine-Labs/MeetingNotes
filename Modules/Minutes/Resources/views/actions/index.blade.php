@@ -47,15 +47,22 @@
     <div class="card">
         <div class="table-responsive">
             <table class="table mb-0 align-middle">
+                {{--
+                    Mobile shows the pertinent columns only (tick, action, owner);
+                    Ref, Due, Priority and Meeting fold into a chevron-toggled
+                    .mn-row-detail row. Desktop shows every column and never
+                    sees the detail rows (d-md-none).
+                --}}
                 <thead>
                     <tr>
                         <th class="w-1"></th>
-                        <th class="w-1">Ref</th>
+                        <th class="w-1 d-none d-md-table-cell">Ref</th>
                         <th>Action</th>
                         <th>Owner</th>
-                        <th>Due</th>
-                        <th>Priority</th>
-                        <th>Meeting</th>
+                        <th class="d-none d-md-table-cell">Due</th>
+                        <th class="d-none d-md-table-cell">Priority</th>
+                        <th class="d-none d-md-table-cell">Meeting</th>
+                        <th class="w-1 d-md-none"><span class="visually-hidden">Details</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -74,7 +81,7 @@
                                     </button>
                                 </form>
                             </td>
-                            <td class="fw-semibold">{{ $item->ref }}</td>
+                            <td class="fw-semibold d-none d-md-table-cell">{{ $item->ref }}</td>
                             <td>
                                 <span class="{{ $item->isDone() ? 'text-decoration-line-through' : '' }}">
                                     {{ $item->description }}
@@ -89,15 +96,15 @@
                                 @endif
                             </td>
                             <td>{{ $item->owner }}</td>
-                            <td class="text-secondary">{{ $item->due_date ?: 'Not specified' }}</td>
-                            <td>
+                            <td class="text-secondary d-none d-md-table-cell">{{ $item->due_date ?: 'Not specified' }}</td>
+                            <td class="d-none d-md-table-cell">
                                 @switch($item->priority)
                                     @case('high') <span class="badge bg-red-lt">high</span> @break
                                     @case('low') <span class="badge bg-secondary-lt">low</span> @break
                                     @default <span class="badge bg-yellow-lt">medium</span>
                                 @endswitch
                             </td>
-                            <td>
+                            <td class="d-none d-md-table-cell">
                                 <a href="{{ route('minutes.show', $item->meeting_id) }}" class="text-decoration-none">
                                     {{ $item->meeting->title ?? 'Untitled meeting' }}
                                 </a>
@@ -105,10 +112,43 @@
                                     <div class="small text-secondary">{{ $item->meeting->meeting_date->format('Y-m-d') }}</div>
                                 @endif
                             </td>
+                            <td class="d-md-none text-end">
+                                <button type="button" class="btn btn-sm btn-ghost-secondary mn-row-toggle"
+                                        data-mn-row-toggle aria-expanded="false" aria-label="Show details">
+                                    <i class="ti ti-chevron-down"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr class="mn-row-detail d-md-none" hidden>
+                            <td colspan="4">
+                                <dl class="mn-row-detail-list">
+                                    <dt>Ref</dt>
+                                    <dd class="fw-semibold">{{ $item->ref }}</dd>
+                                    <dt>Due</dt>
+                                    <dd>{{ $item->due_date ?: 'Not specified' }}</dd>
+                                    <dt>Priority</dt>
+                                    <dd>
+                                        @switch($item->priority)
+                                            @case('high') <span class="badge bg-red-lt">high</span> @break
+                                            @case('low') <span class="badge bg-secondary-lt">low</span> @break
+                                            @default <span class="badge bg-yellow-lt">medium</span>
+                                        @endswitch
+                                    </dd>
+                                    <dt>Meeting</dt>
+                                    <dd>
+                                        <a href="{{ route('minutes.show', $item->meeting_id) }}" class="text-decoration-none">
+                                            {{ $item->meeting->title ?? 'Untitled meeting' }}
+                                        </a>
+                                        @if ($item->meeting?->meeting_date)
+                                            <span class="text-secondary small">{{ $item->meeting->meeting_date->format('Y-m-d') }}</span>
+                                        @endif
+                                    </dd>
+                                </dl>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center text-secondary py-5">
+                            <td colspan="8" class="text-center text-secondary py-5">
                                 <i class="ti ti-list-check fs-1 d-block mb-2"></i>
                                 @if ($status === '' && ! request()->filled('owner') && ! request()->filled('q'))
                                     Nothing open. Either you are admirably on top of things,
