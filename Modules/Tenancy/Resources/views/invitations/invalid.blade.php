@@ -1,6 +1,6 @@
 @extends('core::layouts.guest')
 
-@section('title', 'Invitation not valid — ' . config('app.name'))
+@section('title', 'Invitation not valid: ' . config('app.name'))
 @section('heading', 'This invitation is no longer valid')
 
 @section('content')

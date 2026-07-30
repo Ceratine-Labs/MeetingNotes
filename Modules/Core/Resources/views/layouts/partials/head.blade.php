@@ -16,7 +16,7 @@
 <meta name="color-scheme" content="{{ $theme === 'dark' ? 'dark light' : 'light dark' }}">
 
 <title>@yield('title', config('app.name', 'MeetingNotes'))</title>
-<meta name="description" content="@yield('meta_description', 'Turn a meeting transcript into complete, professional minutes — decisions, action items, attendance and next steps, in the same structure every time.')">
+<meta name="description" content="@yield('meta_description', 'Turn a meeting transcript into complete, professional minutes: decisions, action items, attendance and next steps, in the same structure every time.')">
 
 {{-- Public pages are indexable; anything behind auth is not. --}}
 @hasSection('robots')

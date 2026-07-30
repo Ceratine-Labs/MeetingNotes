@@ -18,7 +18,9 @@
 </head>
 <body class="d-flex flex-column bg-surface-secondary">
     <div class="page page-center">
-        <div class="container container-tight py-4">
+        {{-- mn-auth-enter: the card settles into place on load. Pure CSS,
+             cancelled by prefers-reduced-motion in theme.css. --}}
+        <div class="container container-tight py-4 mn-auth-enter">
             {{-- Wordmark doubles as the way back out to the public site. --}}
             <div class="text-center mb-4">
                 <a href="{{ route('site.home') }}" class="navbar-brand navbar-brand-autodark text-decoration-none">

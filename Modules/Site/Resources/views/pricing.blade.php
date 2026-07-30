@@ -1,6 +1,6 @@
 @extends('core::layouts.marketing')
 
-@section('title', 'Pricing — ' . config('app.name'))
+@section('title', 'Pricing: ' . config('app.name'))
 @section('meta_description', config('app.name') . ' pricing. Start free with three sets of minutes a month, no card required. Paid plans from R149 a month for more generations, more seats and Word and PDF export.')
 @section('robots', 'index, follow')
 
@@ -21,8 +21,8 @@
 
     <div class="container-xl py-6">
         <div class="row row-deck g-3">
-            @foreach ($plans as $plan)
-                <div class="col-md-6 col-lg-3">
+            @foreach ($plans as $i => $plan)
+                <div class="col-md-6 col-lg-3 mn-reveal" style="--mn-reveal-delay: {{ $i * 0.08 }}s;">
                     {{-- Shared with the in-app picker — one definition of each tier. --}}
                     @include('billing::partials.plan-card', [
                         'plan' => $plan,
@@ -35,7 +35,7 @@
         </div>
 
         <div class="row justify-content-center mt-6">
-            <div class="col-lg-9">
+            <div class="col-lg-9 mn-reveal">
                 <h2 class="h1 mb-4">Questions people actually ask</h2>
 
                 <div class="accordion" id="pricing-faq">
@@ -51,7 +51,7 @@
                         $faqs = [
                             [
                                 'What counts as one set of minutes?',
-                                'One generation from one transcript — all nine sections. Editing a section by hand afterwards is free and unlimited. Asking the model to regenerate a single section does not spend another full credit, and a generation that fails is never charged.',
+                                'One generation from one transcript, all nine sections. Editing a section by hand afterwards is free and unlimited. Asking the model to regenerate a single section does not spend another full credit, and a generation that fails is never charged.',
                             ],
                             [
                                 'Do I need a card to try it?',
@@ -63,7 +63,7 @@
                             ],
                             [
                                 'What happens if I cancel?',
-                                'You keep your paid features until the end of the period you have already paid for, then move to the free plan. Nothing you have created is deleted — your meetings, transcripts and minutes stay exactly where they are, subject to free-plan limits on new generations.',
+                                'You keep your paid features until the end of the period you have already paid for, then move to the free plan. Nothing you have created is deleted: your meetings, transcripts and minutes stay exactly where they are, subject to free-plan limits on new generations.',
                             ],
                             [
                                 'What if a payment fails?',
@@ -111,13 +111,13 @@
         </div>
 
         <div class="row justify-content-center mt-6">
-            <div class="col-lg-9">
+            <div class="col-lg-9 mn-reveal">
                 <div class="card">
                     <div class="card-body d-flex flex-wrap align-items-center gap-3">
                         <div class="flex-fill">
                             <div class="fw-semibold">Need something else?</div>
                             <div class="text-secondary small">
-                                Higher volumes, a bespoke arrangement, or an on-premise deployment —
+                                Higher volumes, a bespoke arrangement, or an on-premise deployment:
                                 get in touch and we will work it out.
                             </div>
                         </div>

@@ -1,6 +1,6 @@
 @extends('core::layouts.guest')
 
-@section('title', 'Forgot password — ' . config('app.name'))
+@section('title', 'Forgot password: ' . config('app.name'))
 @section('heading', 'Forgot your password?')
 
 @section('content')

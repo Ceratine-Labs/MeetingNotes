@@ -197,6 +197,355 @@ body {
 }
 
 /* ==========================================================================
+   Marketing motion layer
+
+   Everything in this block is decoration. Three safety rails apply
+   throughout, in this order of precedence:
+
+     1. No JS: app.js stamps `mn-anim` onto <html> before it wires anything
+        up. Without that class nothing is hidden and nothing moves, so a
+        visitor with scripts blocked sees the complete static page.
+     2. prefers-reduced-motion: every animation and reveal in this block is
+        cancelled and the final state shown immediately.
+     3. The hero demo ships its final phase server-rendered (data-phase="3"),
+        so the no-JS and reduced-motion page shows finished minutes, not an
+        empty first frame.
+   ========================================================================== */
+
+/* --- Scroll reveal -------------------------------------------------------
+   Elements carrying .mn-reveal fade-and-rise the first time they scroll into
+   view. Stagger siblings by setting --mn-reveal-delay inline (multiples of
+   ~80ms read well). The IntersectionObserver in app.js adds .mn-in once and
+   then unobserves, so nothing re-animates on scroll-back. */
+
+html.mn-anim .mn-reveal {
+    opacity: 0;
+    transform: translateY(18px);
+}
+
+html.mn-anim .mn-reveal.mn-in {
+    opacity: 1;
+    transform: none;
+    transition:
+        opacity 0.55s ease,
+        transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition-delay: var(--mn-reveal-delay, 0s);
+}
+
+/* --- Hover lift ----------------------------------------------------------
+   Feature and plan cards raise slightly under the pointer. Border tint via
+   color-mix keeps it theme-correct in both light and dark. */
+
+.mn-lift {
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.mn-lift:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--tblr-primary) 35%, var(--tblr-border-color));
+    box-shadow: 0 0.75rem 1.75rem rgba(2, 8, 20, 0.14);
+}
+
+[data-bs-theme='dark'] .mn-lift:hover {
+    box-shadow: 0 0.75rem 1.75rem rgba(0, 0, 0, 0.55);
+}
+
+/* --- Hero glow drift -----------------------------------------------------
+   Two soft blobs wander slowly behind the hero content. isolation creates a
+   stacking context so the negative z-index pseudo-elements sit above the
+   hero's own background wash but below everything readable. */
+
+.mn-hero {
+    isolation: isolate;
+}
+
+.mn-hero::before,
+.mn-hero::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    width: 34rem;
+    height: 34rem;
+    border-radius: 50%;
+    filter: blur(70px);
+    pointer-events: none;
+}
+
+.mn-hero::before {
+    top: -18rem;
+    left: -8rem;
+    background: radial-gradient(closest-side, var(--mn-hero-glow-a), transparent);
+    animation: mn-drift-a 19s ease-in-out infinite alternate;
+}
+
+.mn-hero::after {
+    top: -14rem;
+    right: -10rem;
+    background: radial-gradient(closest-side, var(--mn-hero-glow-b), transparent);
+    animation: mn-drift-b 23s ease-in-out infinite alternate;
+}
+
+@keyframes mn-drift-a {
+    to {
+        transform: translate(6rem, 4rem) scale(1.15);
+    }
+}
+
+@keyframes mn-drift-b {
+    to {
+        transform: translate(-7rem, 5rem) scale(0.9);
+    }
+}
+
+/* --- Hero demo: transcript in, minutes out -------------------------------
+   A three-phase looping showcase. The current phase lives in data-phase on
+   the .mn-demo root; CSS derives everything (visible pane, step pills, line
+   and checklist staggering) from that one attribute, and app.js only cycles
+   the attribute on a timer. Panes are stacked in a single grid cell so the
+   card keeps the height of its tallest phase instead of jumping. */
+
+.mn-demo-body {
+    display: grid;
+}
+
+.mn-demo-pane {
+    grid-area: 1 / 1;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity 0.45s ease,
+        visibility 0s linear 0.45s;
+}
+
+.mn-demo[data-phase='1'] .mn-demo-pane[data-pane='1'],
+.mn-demo[data-phase='2'] .mn-demo-pane[data-pane='2'],
+.mn-demo[data-phase='3'] .mn-demo-pane[data-pane='3'] {
+    opacity: 1;
+    visibility: visible;
+    transition:
+        opacity 0.45s ease 0.1s,
+        visibility 0s;
+}
+
+/* Step pills in the demo header. */
+.mn-demo-step {
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--tblr-secondary-color);
+    background: var(--tblr-bg-surface-secondary);
+    border: 1px solid var(--tblr-border-color);
+    transition:
+        color 0.3s ease,
+        background-color 0.3s ease,
+        border-color 0.3s ease;
+}
+
+.mn-demo[data-phase='1'] .mn-demo-step[data-step='1'],
+.mn-demo[data-phase='2'] .mn-demo-step[data-step='2'],
+.mn-demo[data-phase='3'] .mn-demo-step[data-step='3'] {
+    color: var(--tblr-primary);
+    background: var(--tblr-primary-bg-subtle);
+    border-color: var(--tblr-primary-border-subtle);
+}
+
+/* Phase 1: raw transcript lines appear one after another. The animation is
+   (re)triggered by the data-phase selector matching, so each loop replays. */
+.mn-demo-line {
+    display: block;
+    opacity: 0;
+}
+
+.mn-demo[data-phase='1'] .mn-demo-line {
+    animation: mn-rise-in 0.4s ease forwards;
+    animation-delay: calc(var(--i) * 0.45s);
+}
+
+/* Phase 2: the nine section names tick off in sequence. */
+.mn-demo-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0;
+    font-size: 0.8125rem;
+    padding: 0.125rem 0;
+}
+
+.mn-demo[data-phase='2'] .mn-demo-check {
+    animation: mn-rise-in 0.35s ease forwards;
+    animation-delay: calc(var(--i) * 0.38s);
+}
+
+.mn-demo-progress {
+    width: 0;
+}
+
+.mn-demo[data-phase='2'] .mn-demo-progress {
+    animation: mn-progress 3.8s ease-out forwards;
+}
+
+/* Phase 3: the finished minutes blocks ease in as a final flourish. */
+.mn-demo-result {
+    opacity: 0;
+}
+
+.mn-demo[data-phase='3'] .mn-demo-result {
+    animation: mn-rise-in 0.45s ease forwards;
+    animation-delay: calc(var(--i) * 0.25s);
+}
+
+@keyframes mn-rise-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes mn-progress {
+    to {
+        width: 100%;
+    }
+}
+
+/* --- Four steps timeline -------------------------------------------------
+   A connecting rule behind the step icons on wide screens turns four floating
+   blurbs into one left-to-right journey. */
+
+@media (min-width: 992px) {
+    .mn-steps {
+        position: relative;
+    }
+
+    .mn-steps::before {
+        content: '';
+        position: absolute;
+        top: 1.5rem; /* Centre of the 3rem step avatars. */
+        left: 12.5%;
+        right: 12.5%;
+        border-top: 2px dashed var(--tblr-border-color);
+    }
+
+    .mn-steps > * {
+        position: relative;
+    }
+}
+
+/* --- Stat strip ----------------------------------------------------------
+   Numbers under the hero. The values are counted up by app.js on reveal;
+   font-variant keeps digits from wobbling mid-count. */
+
+.mn-stat-value {
+    font-variant-numeric: tabular-nums;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--tblr-emphasis-color);
+}
+
+/* --- Chunk-merge diagram (How it works) ----------------------------------
+   The long-transcript pipeline, drawn with plain divs so it inherits theme
+   tokens. Bars slide in when revealed. */
+
+.mn-chunk-bar {
+    height: 0.875rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--tblr-primary) 30%, var(--tblr-bg-surface-secondary));
+    border: 1px solid var(--tblr-primary-border-subtle);
+}
+
+.mn-chunk-bar-full {
+    background: color-mix(in srgb, var(--tblr-primary) 55%, var(--tblr-bg-surface-secondary));
+}
+
+.mn-chunk-doc {
+    border: 1px solid var(--tblr-border-color);
+    border-radius: var(--tblr-border-radius);
+    background: var(--tblr-bg-surface);
+}
+
+/* --- Sticky navbar shadow ------------------------------------------------
+   app.js toggles .mn-nav-scrolled once the page moves, so the marketing
+   navbar reads as floating over content rather than fused to the hero. */
+
+.mn-nav-scrolled {
+    box-shadow: 0 0.25rem 1rem rgba(2, 8, 20, 0.08);
+}
+
+[data-bs-theme='dark'] .mn-nav-scrolled {
+    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.5);
+}
+
+/* --- Auth card entrance --------------------------------------------------
+   The centred guest card (login, register, reset) settles into place on
+   load. Pure CSS: it should play even before app.js executes. */
+
+.mn-auth-enter {
+    animation: mn-rise-in 0.5s ease both;
+}
+
+/* --- Reduced motion: kill the lot ---------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+    html.mn-anim .mn-reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    .mn-lift,
+    .mn-lift:hover {
+        transform: none;
+        transition: none;
+    }
+
+    .mn-hero::before,
+    .mn-hero::after,
+    .mn-auth-enter {
+        animation: none;
+    }
+
+    /* Freeze the demo on its finished state whatever phase the loop is in. */
+    .mn-demo .mn-demo-pane {
+        transition: none;
+    }
+
+    .mn-demo[data-phase] .mn-demo-pane[data-pane='3'] {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .mn-demo[data-phase] .mn-demo-pane[data-pane='1'],
+    .mn-demo[data-phase] .mn-demo-pane[data-pane='2'] {
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    .mn-demo .mn-demo-line,
+    .mn-demo .mn-demo-check,
+    .mn-demo .mn-demo-progress {
+        animation: none;
+    }
+
+    .mn-demo .mn-demo-result {
+        animation: none;
+        opacity: 1;
+    }
+
+    .mn-demo .mn-demo-step {
+        transition: none;
+    }
+}
+
+/* ==========================================================================
    Minutes document rendering
 
    Minutes are stored as a SQL struct and rendered to canonical HTML server

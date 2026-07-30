@@ -1,6 +1,6 @@
 @extends('core::layouts.guest')
 
-@section('title', 'Confirm your email — ' . config('app.name'))
+@section('title', 'Confirm your email: ' . config('app.name'))
 @section('heading', 'Confirm your email address')
 
 @section('content')
@@ -23,7 +23,7 @@
         <div class="d-flex">
             <i class="ti ti-info-circle me-2 mt-1"></i>
             <div class="small">
-                Everything else in {{ config('app.name') }} works right now — confirming your
+                Everything else in {{ config('app.name') }} works right now. Confirming your
                 address is only needed before your first generation, so that free
                 allowances cannot be farmed with throwaway addresses.
             </div>

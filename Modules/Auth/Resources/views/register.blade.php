@@ -1,6 +1,6 @@
 @extends('core::layouts.guest')
 
-@section('title', 'Create your account — ' . config('app.name'))
+@section('title', 'Create your account: ' . config('app.name'))
 @section('heading', $invitation ? 'Join ' . $invitation->organisation->name : 'Create your free account')
 
 @section('content')
@@ -79,7 +79,7 @@
                 @error('organisation_name')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
-                <small class="form-hint">Optional — we'll name it after you and you can change it later.</small>
+                <small class="form-hint">Optional. We'll name it after you and you can change it later.</small>
             </div>
         @endunless
 
