@@ -5,6 +5,7 @@ namespace Modules\Minutes\Services;
 use Modules\Billing\Services\QuotaService;
 use Modules\Llm\Models\PromptTemplate;
 use Modules\Llm\Services\LlmManager;
+use Modules\Minutes\Models\ActionItem;
 use Modules\Minutes\Models\Meeting;
 use Modules\Minutes\Support\MinutesSchema;
 use Modules\Search\Services\SearchIndexer;
@@ -196,6 +197,21 @@ class MinutesGenerator
     {
         $meeting->update(['progress_stage' => 'assembling']);
 
+        /*
+         * Completion state (status/completed_at/completed_by) is human
+         * workflow, not generator output, so it must survive the rebuild
+         * below. Refs are the identity users see (A1, A2), and they are
+         * stable whenever this persist was triggered by anything other than
+         * a regeneration of the action items section itself. When that
+         * section IS regenerated the items may genuinely change, and
+         * carrying the tick only where the ref still exists is the honest
+         * best effort — a renamed or renumbered item comes back open.
+         */
+        $completedByRef = $meeting->actionItems()
+            ->done()
+            ->get(['ref', 'completed_at', 'completed_by'])
+            ->keyBy('ref');
+
         // Rebuild typed projections from scratch — they are derived data.
         $meeting->decisions()->forceDelete();
         $meeting->actionItems()->forceDelete();
@@ -213,8 +229,14 @@ class MinutesGenerator
         }
 
         foreach (array_values($sections['action_items'] ?? []) as $i => $item) {
+            $ref = $item['ref'] ?? ('A' . ($i + 1));
+            $carried = $completedByRef->get($ref);
+
             $meeting->actionItems()->create([
-                'ref' => $item['ref'] ?? ('A' . ($i + 1)),
+                'ref' => $ref,
+                'status' => $carried ? ActionItem::STATUS_DONE : ActionItem::STATUS_OPEN,
+                'completed_at' => $carried?->completed_at,
+                'completed_by' => $carried?->completed_by,
                 'description' => $item['description'] ?? '',
                 'owner' => $item['owner'] ?? '[Not specified]',
                 'due_date' => $item['due_date'] ?? null,
