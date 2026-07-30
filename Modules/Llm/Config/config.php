@@ -40,6 +40,16 @@ return [
             'chunk_reduce' => '',
             'regenerate_section' => '',
         ],
+
+        // The in-process FakeDriver (dev/demo/E2E). Not listed in
+        // 'providers' above on purpose: it must never appear in the admin
+        // dropdown, and its driver refuses to construct in production.
+        'fake' => [
+            'generate_full' => 'fake',
+            'chunk_map' => 'fake',
+            'chunk_reduce' => 'fake',
+            'regenerate_section' => 'fake',
+        ],
     ],
 
     // USD per 1M tokens [input, output] for cost estimates on the

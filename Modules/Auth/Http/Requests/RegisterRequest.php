@@ -36,7 +36,11 @@ class RegisterRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'min:2', 'max:120'],
 
-            'email' => ['required', 'email:rfc,dns', 'max:255', 'unique:users,email'],
+            // The dns check (MX lookup) guards production signups against typo
+            // domains, but it makes every offline environment — dev boxes, CI
+            // runners, the E2E suite — reject all addresses. Strict where it
+            // pays, permissive where it lies.
+            'email' => ['required', app()->isProduction() ? 'email:rfc,dns' : 'email:rfc', 'max:255', 'unique:users,email'],
 
             // `confirmed` pairs with password_confirmation. Length 10 rather
             // than Laravel's default 8: this account can hold a customer's

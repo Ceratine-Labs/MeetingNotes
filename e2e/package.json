@@ -1,0 +1,11 @@
+{
+    "name": "notefiend-e2e",
+    "private": true,
+    "description": "Browser E2E suite. Runs against the FakeDriver and demo:seed data; see README.md.",
+    "scripts": {
+        "test": "playwright test"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.49.0"
+    }
+}

@@ -29,6 +29,12 @@ class MinutesServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom($this->modulePath . '/Database/Migrations');
         $this->loadViewsFrom($this->modulePath . '/Resources/views', 'minutes');
 
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Modules\Minutes\Console\DemoSeedCommand::class,
+            ]);
+        }
+
         // Only 'web' here — the route file declares 'auth', 'organisation' and
         // 'verified' itself, per group, because those differ between routes. Adding
         // 'auth' in both places worked but hid where authorisation is actually
