@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Minutes\Http\Controllers\ActionItemController;
 use Modules\Minutes\Http\Controllers\ExportController;
 use Modules\Minutes\Http\Controllers\MeetingController;
 use Modules\Minutes\Http\Controllers\SectionController;
@@ -31,6 +32,15 @@ Route::middleware(['auth', 'organisation'])->group(function () {
     | new customer should be able to look around, and these routes cost nothing
     | to serve.
     */
+    /*
+    | The cross-meeting action items register. Registered before the
+    | /minutes/{meeting} wildcard out of tidiness, though the paths cannot
+    | collide. The update route binds an unscoped ActionItem, so the
+    | controller ownership-checks it through its meeting before touching it.
+    */
+    Route::get('/action-items', [ActionItemController::class, 'index'])->name('minutes.actions.index');
+    Route::put('/action-items/{actionItem}', [ActionItemController::class, 'update'])->name('minutes.actions.update');
+
     Route::get('/minutes', [MeetingController::class, 'index'])->name('minutes.index');
     Route::get('/minutes/new', [MeetingController::class, 'create'])->name('minutes.create');
     Route::get('/minutes/{meeting}', [MeetingController::class, 'show'])->name('minutes.show');
