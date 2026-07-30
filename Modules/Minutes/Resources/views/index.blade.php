@@ -1,6 +1,6 @@
 @extends('core::layouts.app')
 
-@section('title', 'Minutes Library — MeetingNotes')
+@section('title', 'Minutes Library — ' . config('app.name'))
 
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">

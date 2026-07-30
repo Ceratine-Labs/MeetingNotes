@@ -1,6 +1,6 @@
 @extends('admin::layouts.app')
 
-@section('title', 'LLM Settings — MeetingNotes')
+@section('title', 'LLM Settings — ' . config('app.name'))
 
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">

@@ -21,7 +21,9 @@ class Phase0SmokeTest extends TestCase
 
     public function test_login_page_renders(): void
     {
-        $this->get('/login')->assertOk()->assertSee('MeetingNotes');
+        // Reads the configured product name rather than hardcoding it, so a rebrand
+        // cannot break an unrelated smoke test.
+        $this->get('/login')->assertOk()->assertSee(config('app.name'));
     }
 
     public function test_user_can_log_in_and_reach_dashboard(): void

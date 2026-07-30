@@ -1,6 +1,6 @@
 @extends('admin::layouts.app')
 
-@section('title', 'Prompt Templates — MeetingNotes')
+@section('title', 'Prompt Templates — ' . config('app.name'))
 
 @section('content')
     <h1 class="h3 mb-1">Prompt Templates</h1>

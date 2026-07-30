@@ -1,6 +1,6 @@
 @extends('admin::layouts.app')
 
-@section('title', 'Edit Prompt — MeetingNotes')
+@section('title', 'Edit Prompt — ' . config('app.name'))
 
 @section('content')
     <h1 class="h3 mb-1"><code>{{ $template->name }}</code> — v{{ $template->version }}</h1>

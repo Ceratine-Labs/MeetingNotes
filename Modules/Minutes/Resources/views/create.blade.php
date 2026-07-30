@@ -1,6 +1,6 @@
 @extends('core::layouts.app')
 
-@section('title', 'New Minutes — MeetingNotes')
+@section('title', 'New Minutes — ' . config('app.name'))
 
 @section('content')
     <h1 class="h3 mb-4">New minutes</h1>

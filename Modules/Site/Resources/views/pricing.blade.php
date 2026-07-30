@@ -1,7 +1,7 @@
 @extends('core::layouts.marketing')
 
 @section('title', 'Pricing — ' . config('app.name'))
-@section('meta_description', 'MeetingNotes pricing. Start free with three sets of minutes a month, no card required. Paid plans from R149 a month for more generations, more seats and Word and PDF export.')
+@section('meta_description', config('app.name') . ' pricing. Start free with three sets of minutes a month, no card required. Paid plans from R149 a month for more generations, more seats and Word and PDF export.')
 @section('robots', 'index, follow')
 
 @section('content')

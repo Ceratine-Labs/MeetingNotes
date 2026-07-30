@@ -54,6 +54,12 @@ class BackupModuleTest extends TestCase
             ->assertSee('Backups');
     }
 
+    /**
+     * Note the "MeetingNotes/" archive folder below is intentional and is NOT the
+     * product name. config('backup.backup.name') is pinned to BACKUP_ARCHIVE_NAME and
+     * deliberately decoupled from APP_NAME, so renaming the product cannot orphan
+     * existing backup archives. Do not "fix" these to the current brand.
+     */
     public function test_backup_list_shows_files_from_disk(): void
     {
         Storage::fake('backups');

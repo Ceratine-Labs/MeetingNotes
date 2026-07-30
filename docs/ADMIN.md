@@ -119,6 +119,18 @@ Two things the editor will tell you about, both easy to get wrong:
 Blank quota / seat fields mean **unlimited**, not zero. The form says so, because they
 are opposites.
 
+## Renaming the product
+
+`APP_NAME` is the product name and appears throughout the UI, page titles and outgoing
+email. Views read `config('app.name')` rather than hardcoding it, so changing it is a
+one-line change.
+
+**`BACKUP_ARCHIVE_NAME` is deliberately separate.** spatie/laravel-backup keys its
+archive folder off that value, and it defaults to `MeetingNotes`. If it followed
+`APP_NAME`, renaming the product would silently start writing backups to a new folder
+and the admin backup list would stop showing every archive taken before the rename.
+Only change it if you are also moving the existing archives.
+
 ## Security notes
 
 - Login is throttled to 3/min per email+IP and 10/min per IP — tighter than the customer

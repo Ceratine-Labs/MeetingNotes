@@ -28,7 +28,7 @@ class PublicSiteTest extends TestCase
 
         $this->get('/')
             ->assertOk()
-            ->assertSee('MeetingNotes')
+            ->assertSee(config('app.name'))
             ->assertSee('Start free');
     }
 

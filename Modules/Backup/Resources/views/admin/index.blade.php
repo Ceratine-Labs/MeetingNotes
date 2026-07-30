@@ -1,6 +1,6 @@
 @extends('admin::layouts.app')
 
-@section('title', 'Backups — MeetingNotes')
+@section('title', 'Backups — ' . config('app.name'))
 
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">

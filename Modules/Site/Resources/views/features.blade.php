@@ -1,7 +1,7 @@
 @extends('core::layouts.marketing')
 
 @section('title', 'How it works — ' . config('app.name'))
-@section('meta_description', 'How MeetingNotes turns a raw transcript into professional minutes: a defined nine-section structure, chunked processing for long meetings, per-section regeneration, and exports to Word, PDF and Markdown.')
+@section('meta_description', 'How ' . config('app.name') . ' turns a raw transcript into professional minutes: a defined nine-section structure, chunked processing for long meetings, per-section regeneration, and exports to Word, PDF and Markdown.')
 @section('robots', 'index, follow')
 
 @section('content')

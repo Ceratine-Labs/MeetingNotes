@@ -1,6 +1,6 @@
 @extends('core::layouts.app')
 
-@section('title', ($meeting->title ?? 'Minutes') . ' — MeetingNotes')
+@section('title', ($meeting->title ?? 'Minutes') . ' — ' . config('app.name'))
 
 @push('head')
 <style>

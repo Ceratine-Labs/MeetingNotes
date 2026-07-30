@@ -1,4 +1,7 @@
-# MeetingNotes
+# NoteFiend
+
+*(Repository is still named MeetingNotes; the product name lives in `APP_NAME` and is
+a working name for now.)*
 
 Paste or upload a meeting transcript; get professional, structured minutes — the same
 nine canonical sections every time (see [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md)).
@@ -30,6 +33,9 @@ derived from it by the app. The LLM never produces HTML.
 composer install
 cp .env.example .env && php artisan key:generate
 # set DB_* (PostgreSQL) in .env
+# APP_NAME is the product name shown throughout the UI and in emails.
+# Leave BACKUP_ARCHIVE_NAME alone — it is deliberately decoupled from APP_NAME so a
+# rename cannot orphan existing backup archives.
 createdb meetingnotes
 php artisan migrate --force
 php artisan seed:master          # seeds run ONCE, tracked in seed_registry

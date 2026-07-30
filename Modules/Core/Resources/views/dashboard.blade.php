@@ -1,6 +1,6 @@
 @extends('core::layouts.app')
 
-@section('title', 'Dashboard — MeetingNotes')
+@section('title', 'Dashboard — ' . config('app.name'))
 
 @section('content')
     <h1 class="h3 mb-4">Dashboard</h1>

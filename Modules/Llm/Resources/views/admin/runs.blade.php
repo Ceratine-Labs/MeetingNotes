@@ -1,6 +1,6 @@
 @extends('admin::layouts.app')
 
-@section('title', 'Generation Log — MeetingNotes')
+@section('title', 'Generation Log — ' . config('app.name'))
 
 @section('content')
     <h1 class="h3 mb-4">Generation Log</h1>
