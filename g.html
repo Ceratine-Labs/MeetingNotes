@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="csrf-token" content="aFQ1pNI0GdsxRQnJ4TJRrYBOpL0Z6U3QBO5rJFwE">
+<meta name="color-scheme" content="light dark">
+
+<title>Log in: NoteFiend</title>
+<meta name="description" content="Turn a meeting transcript into complete, professional minutes: decisions, action items, attendance and next steps, in the same structure every time.">
+
+
+    <meta name="robots" content="noindex, nofollow">
+
+<link rel="icon" href="http://127.0.0.1:8101/favicon.ico?v=1779750712" sizes="any">
+
+
+<link rel="manifest" href="http://127.0.0.1:8101/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="http://127.0.0.1:8101/icons/apple-touch-icon.png?v=1785461218">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="NoteFiend">
+
+
+<link rel="preload" href="http://127.0.0.1:8101/vendor/inter/files/inter-latin-wght-normal.woff2?v=1785409974" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="http://127.0.0.1:8101/vendor/inter/inter.css?v=1785410019">
+
+
+<link rel="stylesheet" href="http://127.0.0.1:8101/vendor/tabler/css/tabler.min.css?v=1785409974">
+<link rel="stylesheet" href="http://127.0.0.1:8101/vendor/tabler-icons/tabler-icons.min.css?v=1785409974">
+
+
+<link rel="stylesheet" href="http://127.0.0.1:8101/vendor/sweetalert2/sweetalert2.min.css?v=1785409974">
+<link rel="stylesheet" href="http://127.0.0.1:8101/vendor/tom-select/tom-select.bootstrap5.min.css?v=1785409974">
+
+
+
+
+<link rel="stylesheet" href="http://127.0.0.1:8101/css/theme.css?v=1785461218">
+
+
+
+    <script>
+        (function () {
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            if (!prefersDark) {
+                return; // Light is already what the server rendered.
+            }
+
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
+
+            var themeColor = document.querySelector('meta[name="theme-color"]');
+            if (themeColor) {
+                themeColor.setAttribute('content', '#04060a');
+            }
+
+            // Record it so this is decided server-side from now on. Plaintext by
+            // design — mn_theme is excluded from Laravel's cookie encryption in
+            // bootstrap/app.php precisely so PHP and JS can both read it.
+            document.cookie = 'mn_theme=dark' +
+                '; path=/; max-age=31536000; SameSite=Lax';
+        })();
+    </script>
+</head>
+<body class="d-flex flex-column bg-surface-secondary">
+    <div class="page page-center">
+        
+        <div class="container container-tight py-4 mn-auth-enter">
+            
+            <div class="text-center mb-4">
+                <a href="http://127.0.0.1:8101" class="navbar-brand navbar-brand-autodark text-decoration-none">
+                    <i class="ti ti-file-text text-primary fs-1 me-2"></i>
+                    <span class="fs-2 fw-semibold">NoteFiend</span>
+                </a>
+            </div>
+
+            <div class="card card-md">
+                <div class="card-body">
+                                            <h2 class="h3 text-center mb-4">Log in to your account</h2>
+                    
+                    
+                        <form method="POST" action="http://127.0.0.1:8101/login" autocomplete="on">
+        <input type="hidden" name="_token" value="aFQ1pNI0GdsxRQnJ4TJRrYBOpL0Z6U3QBO5rJFwE" autocomplete="off">
+        
+        
+        <div class="mb-3">
+            <label for="email" class="form-label">Email address</label>
+            <input type="email" name="email" id="email" value=""
+                   class="form-control "
+                   placeholder="you@company.com" autocomplete="email" required autofocus>
+                    </div>
+
+        <div class="mb-2">
+            <label for="password" class="form-label">
+                Password
+                <span class="form-label-description">
+                    <a href="http://127.0.0.1:8101/forgot-password">Forgot password?</a>
+                </span>
+            </label>
+            <input type="password" name="password" id="password"
+                   class="form-control "
+                   placeholder="Your password" autocomplete="current-password" required>
+                    </div>
+
+        <div class="mb-3">
+            <label class="form-check">
+                <input type="checkbox" name="remember" class="form-check-input" value="1"
+                    >
+                <span class="form-check-label">Keep me signed in</span>
+            </label>
+        </div>
+
+        <div class="form-footer">
+            <button type="submit" class="btn btn-primary w-100">Log in</button>
+        </div>
+    </form>
+                </div>
+            </div>
+
+                            <div class="text-center text-secondary mt-3">    Don't have an account yet?
+    <a href="http://127.0.0.1:8101/register">
+        Sign up
+    </a>
+    (free, no card required).
+</div>
+            
+            
+            <div class="text-center mt-4">
+                <span class="d-inline-flex"><a href="#" class="nav-link px-2 hide-theme-dark" title="Switch to dark theme"
+   data-mn-theme-toggle="dark" data-bs-toggle="tooltip" data-bs-placement="bottom"
+   role="button" aria-pressed="false">
+    <span class="visually-hidden">Switch to dark theme</span>
+    <i class="ti ti-moon fs-2"></i>
+</a>
+
+<a href="#" class="nav-link px-2 hide-theme-light" title="Switch to light theme"
+   data-mn-theme-toggle="light" data-bs-toggle="tooltip" data-bs-placement="bottom"
+   role="button" aria-pressed="false">
+    <span class="visually-hidden">Switch to light theme</span>
+    <i class="ti ti-sun fs-2"></i>
+</a>
+</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="http://127.0.0.1:8101/vendor/tabler/js/tabler.min.js?v=1785409974" defer></script>
+<script src="http://127.0.0.1:8101/vendor/sweetalert2/sweetalert2.min.js?v=1785409974" defer></script>
+<script src="http://127.0.0.1:8101/vendor/tom-select/tom-select.complete.min.js?v=1785409974" defer></script>
+
+
+
+
+<script src="http://127.0.0.1:8101/js/app.js?v=1785461218" defer></script>
+
+</body>
+</html>

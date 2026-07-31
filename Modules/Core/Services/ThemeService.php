@@ -116,6 +116,34 @@ class ThemeService
     }
 
     /**
+     * Does this visitor already have a stored theme preference?
+     *
+     * Drives whether the layout emits the prefers-color-scheme fallback script at all.
+     *
+     * The bug this exists to prevent: that script used to decide for itself by looking
+     * for the cookie in document.cookie. A signed-in user whose preference lives in
+     * `users.theme` but who has no cookie in *this* browser — a new browser, or cleared
+     * cookies — looked to it like a first-time visitor, so it overrode their saved
+     * choice with the operating system's. Someone who had explicitly chosen light saw
+     * dark on every fresh browser, and the fix they reached for (toggling again) did not
+     * stick, because nothing was wrong with the saving.
+     *
+     * The server knows the answer; the script should never be guessing it.
+     */
+    public function hasExplicitPreference(Request $request): bool
+    {
+        $user = $request->user();
+
+        if ($user !== null && $this->isValid($user->theme ?? null)) {
+            return true;
+        }
+
+        $cookie = $request->cookie(self::COOKIE);
+
+        return is_string($cookie) && $this->isValid($cookie);
+    }
+
+    /**
      * The theme the toggle would switch to — used to label the control.
      *
      * @return 'light'|'dark'

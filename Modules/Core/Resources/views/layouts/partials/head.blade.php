@@ -93,28 +93,41 @@
 @stack('head')
 
 {{--
-    First-visit theme detection.
+    First-visit theme detection — emitted ONLY when the server has no stored
+    preference for this visitor.
 
-    The server has already decided this render's theme. This script only
-    matters for a visitor with NO stored preference at all: it asks the OS
-    via prefers-color-scheme, and if the answer disagrees with what we just
-    rendered it corrects the attribute and drops the cookie so every later
-    request is decided server-side with no JS involved.
+    The gate is the important part. This script used to decide for itself by looking
+    for the cookie in document.cookie, which made a signed-in user with a saved
+    `users.theme` but no cookie in *this* browser look like a first-time visitor — so it
+    overrode their explicit choice with the operating system's. Someone who had chosen
+    light saw dark on every fresh browser, and toggling again did not help, because
+    nothing was wrong with the saving.
 
-    It is inline and synchronous on purpose — an external file would paint
-    the wrong theme first. Kept to a few lines for the same reason.
+    The server knows whether a preference exists, so it decides whether this runs at
+    all. When it does run, it is inline and synchronous on purpose: an external file
+    would paint the wrong theme first.
 --}}
-<script>
-    (function () {
-        if (document.cookie.indexOf('{{ \Modules\Core\Services\ThemeService::COOKIE }}=') !== -1) {
-            return; // An explicit preference exists; the server already used it.
-        }
+@unless ($hasThemePreference)
+    <script>
+        (function () {
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        var theme = prefersDark ? 'dark' : 'light';
+            if (!prefersDark) {
+                return; // Light is already what the server rendered.
+            }
 
-        document.documentElement.setAttribute('data-bs-theme', theme);
-        document.cookie = '{{ \Modules\Core\Services\ThemeService::COOKIE }}=' + theme +
-            '; path=/; max-age=31536000; SameSite=Lax';
-    })();
-</script>
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
+
+            var themeColor = document.querySelector('meta[name="theme-color"]');
+            if (themeColor) {
+                themeColor.setAttribute('content', '#04060a');
+            }
+
+            // Record it so this is decided server-side from now on. Plaintext by
+            // design — mn_theme is excluded from Laravel's cookie encryption in
+            // bootstrap/app.php precisely so PHP and JS can both read it.
+            document.cookie = '{{ \Modules\Core\Services\ThemeService::COOKIE }}=dark' +
+                '; path=/; max-age=31536000; SameSite=Lax';
+        })();
+    </script>
+@endunless

@@ -14,11 +14,25 @@ ThemeService::current($request)
   3. 'light'                                     → the product default
 ```
 
+**The `mn_theme` cookie is excluded from Laravel's cookie encryption** (see
+`bootstrap/app.php`). It has to be, because JavaScript writes and reads it as well as
+PHP. Laravel encrypts every cookie by default and silently *discards* any it cannot
+decrypt on the way in — so without the exclusion, a plaintext cookie written by the
+browser never reaches PHP at all and a guest's choice is dropped on the next request.
+
 `prefers-color-scheme` is deliberately **not** in that list. PHP cannot read a media
 query, and honouring it would mean deciding in JS after paint. Instead the layout
 carries a few lines of inline script that consult it **only when no preference exists at
 all**, correct the attribute, and drop the cookie — so every subsequent request is
 server-decided with no JS involved.
+
+**The fallback script is emitted only when the server knows of no stored preference**
+(`ThemeService::hasExplicitPreference()` drives an `@unless` in `head.blade.php`). It must
+never decide that for itself. It previously checked `document.cookie`, which made a
+signed-in user whose choice lived in `users.theme` but who had no cookie in *that*
+browser look like a first-time visitor — so it overrode their explicit choice with the
+operating system's. Someone who had chosen light saw dark in every fresh browser, and
+toggling again did not help, because nothing was wrong with the saving.
 
 This is also why Tabler's own `tabler-theme.js` is **not** vendored: it decides in
 `localStorage` after the document loads, which flashes the wrong theme on every

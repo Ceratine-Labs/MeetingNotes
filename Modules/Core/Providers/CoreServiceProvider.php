@@ -85,7 +85,14 @@ class CoreServiceProvider extends ServiceProvider
         View::composer(
             ['core::layouts.app', 'core::layouts.guest', 'core::layouts.marketing', 'admin::layouts.app'],
             function (ViewContract $view): void {
-                $view->with('theme', app(ThemeService::class)->current(request()));
+                $themes = app(ThemeService::class);
+
+                $view->with([
+                    'theme' => $themes->current(request()),
+                    // Drives whether head.blade.php emits the prefers-color-scheme
+                    // fallback at all. The server knows; the script must not guess.
+                    'hasThemePreference' => $themes->hasExplicitPreference(request()),
+                ]);
             }
         );
 

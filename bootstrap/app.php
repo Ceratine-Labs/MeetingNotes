@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Modules\Admin\Http\Middleware\AuthenticateAdmin;
+use Modules\Core\Services\ThemeService;
 use Modules\Tenancy\Http\Middleware\EnsureOrganisation;
 use Modules\Tenancy\Http\Middleware\EnsureOrganisationRole;
 
@@ -34,6 +35,19 @@ return Application::configure(basePath: dirname(__DIR__))
          * user who changes their password because they suspect someone has it
          * would not actually evict them.
          */
+        /*
+         * The theme cookie is written and read by JavaScript as well as by PHP, so it
+         * must NOT be encrypted.
+         *
+         * Laravel encrypts every cookie by default and silently DISCARDS any it cannot
+         * decrypt on the way in. That meant a plaintext `mn_theme` set by the browser
+         * never reached PHP at all, so a guest's theme choice was dropped on the next
+         * request and the site snapped back to the default.
+         */
+        $middleware->encryptCookies(except: [
+            ThemeService::COOKIE,
+        ]);
+
         $middleware->web(append: [
             AuthenticateSession::class,
         ]);
@@ -65,7 +79,19 @@ return Application::configure(basePath: dirname(__DIR__))
         }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        /*
+         * Render errors as JSON when the CLIENT asked for JSON — not only under api/*.
+         *
+         * The previous rule was `$request->is('api/*')` alone, which meant every
+         * fetch()-driven endpoint outside that prefix (the theme toggle, workspace
+         * search, the generation status poll, section edits) received a 302 to an HTML
+         * page on a validation failure instead of a 422 with the errors. The browser
+         * would then try to parse HTML as JSON and the real problem stayed invisible.
+         *
+         * expectsJson() covers Accept: application/json and XHR requests, which is
+         * exactly the set of callers that cannot do anything useful with HTML.
+         */
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*'),
+            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
     })->create();
